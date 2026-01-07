@@ -58,18 +58,15 @@ const Settings = () => {
         }
 
         try {
-            const config = {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                withCredentials: true // Important for cookies if used, though usually tokens in headers
-            };
+            // Config handled by interceptor for Authorization
+            // const config = { ... };
 
-            const { data } = await axios.put(`${import.meta.env.VITE_API_URL}/api/auth/profile`, {
+            const apiUrl = import.meta.env.VITE_API_URL || 'https://ai-job-tracker-backend.onrender.com';
+            const { data } = await axios.put(`${apiUrl}/api/auth/profile`, {
                 name,
                 email,
                 password: password || undefined
-            }, config);
+            });
 
             // Update context
             const updatedUser = { ...user, name: data.name, email: data.email };
@@ -101,7 +98,8 @@ const Settings = () => {
                 atsScore: Math.floor(Math.random() * (95 - 70) + 70),
             };
 
-            await axios.post(`${import.meta.env.VITE_API_URL}/api/resumes`, mockData);
+            const apiUrl = import.meta.env.VITE_API_URL || 'https://ai-job-tracker-backend.onrender.com';
+            await axios.post(`${apiUrl}/api/resumes`, mockData);
             setMessage(`Resume "${file.name}" uploaded successfully!`);
             setResumeFile(null);
         } catch (err) {
