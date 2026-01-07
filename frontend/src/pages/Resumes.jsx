@@ -51,15 +51,13 @@ const Resumes = () => {
         e.preventDefault();
         if (!selectedFile) return;
 
-        // Simulating upload and AI processing
-        const mockData = {
-            name: selectedFile.name,
-            size: (selectedFile.size / 1024 / 1024).toFixed(2) + " MB",
-            atsScore: Math.floor(Math.random() * (95 - 70) + 70), // Random score between 70-95
-        };
+        // Create FormData
+        const formData = new FormData();
+        formData.append('resume', selectedFile);
+        formData.append('name', selectedFile.name);
 
         try {
-            const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/resumes`, mockData);
+            const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/resumes`, formData);
 
             const newResume = {
                 id: data._id,

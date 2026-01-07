@@ -90,16 +90,18 @@ const Settings = () => {
         setMessage('');
         setError('');
 
-        // Mock upload or actual upload if functionality exists
-        try {
-            const mockData = {
-                name: file.name,
-                size: (file.size / 1024 / 1024).toFixed(2) + " MB",
-                atsScore: Math.floor(Math.random() * (95 - 70) + 70),
-            };
+        // Create FormData for file upload
+        const formData = new FormData();
+        formData.append('resume', file);
+        formData.append('name', file.name);
 
+        try {
             const apiUrl = import.meta.env.VITE_API_URL || 'https://ai-job-tracker-backend.onrender.com';
-            await axios.post(`${apiUrl}/api/resumes`, mockData);
+
+            // Header for multipart/form-data is set automatically by axios/browser when using FormData
+            // Authorization token is handled by global interceptor
+            await axios.post(`${apiUrl}/api/resumes`, formData);
+
             setMessage(`Resume "${file.name}" uploaded successfully!`);
             setResumeFile(null);
         } catch (err) {

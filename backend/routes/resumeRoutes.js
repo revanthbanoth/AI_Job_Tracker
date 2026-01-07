@@ -7,9 +7,11 @@ const {
 } = require('../controllers/resumeController');
 const { protect } = require('../middleware/authMiddleware');
 
+const upload = require('../middleware/uploadMiddleware');
+
 router.route('/')
     .get(protect, getResumes)
-    .post(protect, uploadResume);
+    .post(protect, upload.single('resume'), uploadResume);
 
 router.route('/:id')
     .delete(protect, deleteResume);
