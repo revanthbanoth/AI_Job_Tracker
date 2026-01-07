@@ -65,7 +65,7 @@ const Settings = () => {
                 withCredentials: true // Important for cookies if used, though usually tokens in headers
             };
 
-            const { data } = await axios.put('http://localhost:5000/api/auth/profile', {
+            const { data } = await axios.put(`${import.meta.env.VITE_API_URL}/api/auth/profile`, {
                 name,
                 email,
                 password: password || undefined
@@ -101,7 +101,7 @@ const Settings = () => {
                 atsScore: Math.floor(Math.random() * (95 - 70) + 70),
             };
 
-            await axios.post('http://localhost:5000/api/resumes', mockData);
+            await axios.post(`${import.meta.env.VITE_API_URL}/api/resumes`, mockData);
             setMessage(`Resume "${file.name}" uploaded successfully!`);
             setResumeFile(null);
         } catch (err) {

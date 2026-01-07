@@ -47,7 +47,7 @@ const Applications = () => {
             try {
                 // Fetch Applications
                 // Use a catch block to ensure we always return an array even if 404/500
-                const appsRes = await axios.get('http://localhost:5000/api/applications').catch(e => ({ data: [] }));
+                const appsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/applications`).catch(e => ({ data: [] }));
 
                 // Validate data is array
                 const appsData = Array.isArray(appsRes.data) ? appsRes.data : [];
@@ -64,7 +64,7 @@ const Applications = () => {
                 setApplications(formattedApps);
 
                 // Fetch Resumes
-                const resumesRes = await axios.get('http://localhost:5000/api/resumes').catch(e => ({ data: [] }));
+                const resumesRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/resumes`).catch(e => ({ data: [] }));
                 // Validate resumes data is array
                 setResumes(Array.isArray(resumesRes.data) ? resumesRes.data : []);
 
@@ -122,7 +122,7 @@ Education: Bachelor of Science in Computer Science.`);
 
         setAnalyzing(true);
         try {
-            const { data } = await axios.post('http://localhost:8000/analyze-resume', {
+            const { data } = await axios.post(`${import.meta.env.VITE_AI_API_URL}/analyze-resume`, {
                 resume_text: resumeText,
                 job_description: jobDescription
             });
@@ -153,7 +153,7 @@ Education: Bachelor of Science in Computer Science.`);
         };
 
         try {
-            const { data } = await axios.post('http://localhost:5000/api/applications', applicationData);
+            const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/applications`, applicationData);
 
             const newApp = {
                 id: data._id,
@@ -175,7 +175,7 @@ Education: Bachelor of Science in Computer Science.`);
 
     const handleDelete = async (id) => {
         try {
-            await axios.delete(`http://localhost:5000/api/applications/${id}`);
+            await axios.delete(`${import.meta.env.VITE_API_URL}/api/applications/${id}`);
             setApplications(applications.filter(app => app.id !== id));
         } catch (error) {
             console.error('Failed to delete application', error);

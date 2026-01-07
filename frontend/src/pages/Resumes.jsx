@@ -14,7 +14,7 @@ const Resumes = () => {
         const fetchResumes = async () => {
             setLoading(true);
             try {
-                const { data } = await axios.get('http://localhost:5000/api/resumes').catch(e => ({ data: [] }));
+                const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/resumes`).catch(e => ({ data: [] }));
                 // Ensure data is mapped correctly if needed, but backend returns what we need
                 // Backend returns: {_id, name, size, atsScore, uploadDate(createdAt), status}
 
@@ -59,7 +59,7 @@ const Resumes = () => {
         };
 
         try {
-            const { data } = await axios.post('http://localhost:5000/api/resumes', mockData);
+            const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/resumes`, mockData);
 
             const newResume = {
                 id: data._id,
@@ -80,7 +80,7 @@ const Resumes = () => {
 
     const handleDelete = async (id) => {
         try {
-            await axios.delete(`http://localhost:5000/api/resumes/${id}`);
+            await axios.delete(`${import.meta.env.VITE_API_URL}/api/resumes/${id}`);
             setResumes(resumes.filter(r => r.id !== id));
         } catch (error) {
             console.error('Failed to delete resume', error);

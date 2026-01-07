@@ -18,7 +18,7 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
-                const { data } = await axios.get('http://localhost:5000/api/applications');
+                const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/applications`);
 
                 // Calculate stats
                 const total = data.length;
