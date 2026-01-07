@@ -1,4 +1,5 @@
 import React from 'react'
+import './axiosConfig' // Import global axios config
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
