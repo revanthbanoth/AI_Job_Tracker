@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import axios from 'axios';
+import api from '../axiosConfig';
 import Modal from '../components/Modal';
 import { UploadCloud, FileText, Trash2 } from 'lucide-react';
 
@@ -14,7 +14,7 @@ const Resumes = () => {
         const fetchResumes = async () => {
             setLoading(true);
             try {
-                const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/resumes`).catch(e => ({ data: [] }));
+                const { data } = await api.get(`/api/resumes`).catch(e => ({ data: [] }));
                 // Ensure data is mapped correctly if needed, but backend returns what we need
                 // Backend returns: {_id, name, size, atsScore, uploadDate(createdAt), status}
 
@@ -57,7 +57,7 @@ const Resumes = () => {
         formData.append('name', selectedFile.name);
 
         try {
-            const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/resumes`, formData);
+            const { data } = await api.post(`/api/resumes`, formData);
 
             const newResume = {
                 id: data._id,
@@ -78,7 +78,7 @@ const Resumes = () => {
 
     const handleDelete = async (id) => {
         try {
-            await axios.delete(`${import.meta.env.VITE_API_URL}/api/resumes/${id}`);
+            await api.delete(`/api/resumes/${id}`);
             setResumes(resumes.filter(r => r.id !== id));
         } catch (error) {
             console.error('Failed to delete resume', error);

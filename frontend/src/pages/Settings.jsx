@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Moon, Sun, Save, UploadCloud } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import api from '../axiosConfig';
 
 const Settings = () => {
     const { user, setUser } = useAuth();
@@ -61,8 +61,7 @@ const Settings = () => {
             // Config handled by interceptor for Authorization
             // const config = { ... };
 
-            const apiUrl = import.meta.env.VITE_API_URL || 'https://ai-job-tracker-backend.onrender.com';
-            const { data } = await axios.put(`${apiUrl}/api/auth/profile`, {
+            const { data } = await api.put(`/api/auth/profile`, {
                 name,
                 email,
                 password: password || undefined
@@ -96,11 +95,9 @@ const Settings = () => {
         formData.append('name', file.name);
 
         try {
-            const apiUrl = import.meta.env.VITE_API_URL || 'https://ai-job-tracker-backend.onrender.com';
-
             // Header for multipart/form-data is set automatically by axios/browser when using FormData
             // Authorization token is handled by global interceptor
-            await axios.post(`${apiUrl}/api/resumes`, formData);
+            await api.post(`/api/resumes`, formData);
 
             setMessage(`Resume "${file.name}" uploaded successfully!`);
             setResumeFile(null);

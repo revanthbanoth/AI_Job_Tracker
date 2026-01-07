@@ -1,10 +1,13 @@
 import axios from 'axios';
 
-// Set default config
-axios.defaults.withCredentials = true;
+// Create a centralized axios instance
+const api = axios.create({
+    baseURL: import.meta.env.VITE_API_URL || 'https://ai-job-tracker-backend.onrender.com', // Centralized Base URL
+    withCredentials: true,
+});
 
 // Add a request interceptor
-axios.interceptors.request.use(
+api.interceptors.request.use(
     (config) => {
         // 1. Try to get token from standalone key
         let token = localStorage.getItem('token');
@@ -26,7 +29,7 @@ axios.interceptors.request.use(
             }
         }
 
-        // 3. Attach token to headers
+        // 3. Attach token to headers if available
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -38,4 +41,4 @@ axios.interceptors.request.use(
     }
 );
 
-export default axios;
+export default api;
