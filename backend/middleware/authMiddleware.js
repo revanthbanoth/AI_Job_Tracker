@@ -7,6 +7,11 @@ const protect = asyncHandler(async (req, res, next) => {
 
     token = req.cookies.jwt;
 
+    // Check for Bearer token in header if cookie not present or as fallback
+    if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        token = req.headers.authorization.split(' ')[1];
+    }
+
     if (token) {
         try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
