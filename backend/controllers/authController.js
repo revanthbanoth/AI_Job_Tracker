@@ -29,6 +29,7 @@ const authUser = asyncHandler(async (req, res) => {
 // @access  Public
 const registerUser = asyncHandler(async (req, res) => {
     const { name, email, password } = req.body;
+    console.log('Register Request:', { name, email, password }); // Debug log
 
     const userExists = await User.findOne({ email });
 
@@ -40,22 +41,27 @@ const registerUser = asyncHandler(async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const user = await User.create({
-        name,
-        email,
-        password: hashedPassword
-    });
-
-    if (user) {
-        generateToken(res, user._id);
-        res.status(201).json({
-            _id: user._id,
-            name: user.name,
-            email: user.email,
+    try {
+        const user = await User.create({
+            name,
+            email,
+            password: hashedPassword
         });
-    } else {
-        res.status(400);
-        throw new Error('Invalid user data');
+
+        if (user) {
+            generateToken(res, user._id);
+            res.status(201).json({
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+            });
+        } else {
+            res.status(400);
+            throw new Error('Invalid user data');
+        }
+    } catch (error) {
+        console.error('Error creating user:', error);
+        throw error;
     }
 });
 
