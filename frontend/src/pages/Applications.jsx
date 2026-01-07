@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import api from '../services/api';
 import { motion } from 'framer-motion';
 import { Briefcase, Filter, Plus, Search, Sparkles, Trash2, ArrowRight } from 'lucide-react';
 import Modal from '../components/Modal';
@@ -47,7 +48,7 @@ const Applications = () => {
             try {
                 // Fetch Applications
                 // Use a catch block to ensure we always return an array even if 404/500
-                const appsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/applications`).catch(e => ({ data: [] }));
+                const appsRes = await api.get(`/api/applications`).catch(e => ({ data: [] }));
 
                 // Validate data is array
                 const appsData = Array.isArray(appsRes.data) ? appsRes.data : [];
@@ -64,7 +65,7 @@ const Applications = () => {
                 setApplications(formattedApps);
 
                 // Fetch Resumes
-                const resumesRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/resumes`).catch(e => ({ data: [] }));
+                const resumesRes = await api.get(`/api/resumes`).catch(e => ({ data: [] }));
                 // Validate resumes data is array
                 setResumes(Array.isArray(resumesRes.data) ? resumesRes.data : []);
 
@@ -153,7 +154,7 @@ Education: Bachelor of Science in Computer Science.`);
         };
 
         try {
-            const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/applications`, applicationData);
+            const { data } = await api.post(`/api/applications`, applicationData);
 
             const newApp = {
                 id: data._id,
@@ -175,7 +176,7 @@ Education: Bachelor of Science in Computer Science.`);
 
     const handleDelete = async (id) => {
         try {
-            await axios.delete(`${import.meta.env.VITE_API_URL}/api/applications/${id}`);
+            await api.delete(`/api/applications/${id}`);
             setApplications(applications.filter(app => app.id !== id));
         } catch (error) {
             console.error('Failed to delete application', error);

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import api from '../axiosConfig';
+import api from '../services/api';
 import Modal from '../components/Modal';
 import { UploadCloud, FileText, Trash2 } from 'lucide-react';
 

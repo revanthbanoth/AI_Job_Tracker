@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import { motion } from 'framer-motion';
 import { Briefcase, Calendar, Trophy, XCircle, ArrowRight, ExternalLink } from 'lucide-react';
 
@@ -18,7 +18,7 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
-                const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/applications`);
+                const { data } = await api.get(`/api/applications`);
 
                 // Calculate stats
                 const total = data.length;

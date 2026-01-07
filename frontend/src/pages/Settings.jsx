@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Moon, Sun, Save, UploadCloud } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import api from '../axiosConfig';
+import api from '../services/api';
 
 const Settings = () => {
     const { user, setUser } = useAuth();

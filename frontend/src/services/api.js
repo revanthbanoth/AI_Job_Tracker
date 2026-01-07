@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create a centralized axios instance
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'https://ai-job-tracker-backend.onrender.com', // Centralized Base URL
+    baseURL: import.meta.env.VITE_API_URL || 'https://ai-job-tracker-backend.onrender.com',
     withCredentials: true,
 });
 
