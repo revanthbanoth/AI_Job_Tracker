@@ -14,16 +14,17 @@ const storage = multer.diskStorage({
 // Check file type
 function checkFileType(file, cb) {
     // Allowed ext
-    const filetypes = /pdf|doc|docx/;
+    // Allowed ext
+    const filetypes = /pdf/;
     // Check ext
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
     // Check mime
-    const mimetype = filetypes.test(file.mimetype) || file.mimetype === 'application/msword' || file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    const mimetype = filetypes.test(file.mimetype) || file.mimetype === 'application/pdf';
 
     if (mimetype && extname) {
         return cb(null, true);
     } else {
-        cb('Error: PDF and Docs Only!');
+        cb('Error: PDF Only!');
     }
 }
 
