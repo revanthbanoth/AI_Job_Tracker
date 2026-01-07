@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-background: 248 250 252;
+    --color-card: 255 255 255;
+    --color-text: 15 23 42;
+    --color-border: 226 232 240;
+    --color-muted: 100 116 139;
+  }
+
+  .dark {
+    --color-background: 15 23 42;
+    --color-card: 30 41 59;
+    --color-text: 241 245 249;
+    --color-border: 51 65 85;
+    --color-muted: 148 163 184;
+  }
+
+  body {
+    @apply bg-background text-text font-sans antialiased;
+  }
+}
