@@ -30,27 +30,32 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-text font-sans">
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
+    <div className="min-h-screen bg-background text-text font-sans flex flex-col">
+      <div className="flex-grow">
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
-        {/* Protected Routes wrapped in Layout */}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <Layout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<Dashboard />} />
-          <Route path="applications" element={<Applications />} />
-          <Route path="resumes" element={<Resumes />} />
-          <Route path="settings" element={<Settings />} />
-        </Route>
-      </Routes>
+          {/* Protected Routes wrapped in Layout */}
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Dashboard />} />
+            <Route path="applications" element={<Applications />} />
+            <Route path="resumes" element={<Resumes />} />
+            <Route path="settings" element={<Settings />} />
+          </Route>
+        </Routes>
+      </div>
+      <footer className="py-2 text-center text-xs text-muted/50 border-t border-white/5">
+        Developed by B Revanth Kumar
+      </footer>
     </div>
   )
 }
