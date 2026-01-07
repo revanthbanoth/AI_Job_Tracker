@@ -1,5 +1,5 @@
 const express = require('express');
-// Force restart
+// Force restart for DB change
 const dotenv = require('dotenv');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
