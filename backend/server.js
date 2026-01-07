@@ -20,7 +20,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174', 'https://ai-job-tracker-htng.onrender.com'];
+const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'https://ai-job-tracker-htng.onrender.com',
+    'https://www.ai-job-tracker-htng.onrender.com'
+];
 if (process.env.FRONTEND_URL) {
     allowedOrigins.push(process.env.FRONTEND_URL);
 }
