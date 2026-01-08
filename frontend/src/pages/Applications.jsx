@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import api from '../services/api';
 import { motion } from 'framer-motion';
 import { Briefcase, Filter, Plus, Search, Sparkles, Trash2, ArrowRight } from 'lucide-react';
@@ -123,7 +122,8 @@ Education: Bachelor of Science in Computer Science.`);
 
         setAnalyzing(true);
         try {
-            const { data } = await axios.post(`${import.meta.env.VITE_AI_API_URL}/analyze-resume`, {
+            // Use backend proxy instead of direct call
+            const { data } = await api.post(`/api/analysis/analyze-resume`, {
                 resume_text: resumeText,
                 job_description: jobDescription
             });
@@ -134,7 +134,7 @@ Education: Bachelor of Science in Computer Science.`);
                 match_score: 0,
                 matched_skills: [],
                 missing_skills: [],
-                suggestions: ["Analysis service error. Please ensure the AI service is running on port 8000."]
+                suggestions: ["Analysis failed. Please check if the AI service is deployed and linked."]
             });
         } finally {
             setAnalyzing(false);

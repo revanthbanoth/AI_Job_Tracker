@@ -50,6 +50,7 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/resumes', require('./routes/resumeRoutes'));
 app.use('/api/applications', require('./routes/applicationRoutes'));
+app.use('/api/analysis', require('./routes/analysisRoutes'));
 
 app.use(notFound);
 app.use(errorHandler);

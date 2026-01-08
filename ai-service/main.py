@@ -143,6 +143,10 @@ async def analyze_resume(request: AnalyzeRequest):
     # 3. Final Weighted Score
     final_score = (skill_match_score * 0.6) + (text_match_score * 0.4)
     final_score = int(final_score)
+    
+    # Ensure non-zero match if there is *some* text match but 0 skill match
+    if final_score == 0 and text_match_score > 10:
+        final_score = 10
 
     if len(matched_skills_set) > 0 and len(matched_skills_set) >= len(missing_skills_set) and final_score < 50:
         final_score = 50
