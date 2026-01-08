@@ -75,9 +75,21 @@ const Settings = () => {
             });
 
             // Update context
+            const existingUserInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             const updatedUser = { ...user, name: data.name, email: data.email };
+
+            // Critical: Preserve token if it exists in the old userInfo but not in the new data
+            if (existingUserInfo.token) {
+                updatedUser.token = existingUserInfo.token;
+            }
+
             setUser(updatedUser);
             localStorage.setItem('userInfo', JSON.stringify(updatedUser)); // Sync with local storage
+
+            // Double check token key
+            if (updatedUser.token) {
+                localStorage.setItem('token', updatedUser.token);
+            }
 
             setMessage('Profile updated successfully');
             setPassword('');
@@ -192,7 +204,7 @@ const Settings = () => {
                             ref={resumeInputRef}
                             onChange={handleResumeUpload}
                             className="hidden"
-                            accept=".pdf,.docx,.doc"
+                            accept=".pdf"
                         />
                         <button
                             onClick={() => resumeInputRef.current.click()}
