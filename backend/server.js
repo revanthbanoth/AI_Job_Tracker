@@ -32,7 +32,7 @@ if (process.env.FRONTEND_URL) {
 
 app.use(cors({
     origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
+        if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.onrender.com')) {
             callback(null, true);
         } else {
             console.log('Blocked by CORS:', origin);

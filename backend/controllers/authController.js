@@ -94,6 +94,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
         }
 
         const updatedUser = await user.save();
+        console.log('Profile updated for user:', updatedUser._id);
 
         res.json({
             _id: updatedUser._id,

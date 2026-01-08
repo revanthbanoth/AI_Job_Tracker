@@ -4,10 +4,10 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
 const Settings = () => {
-    const { user, setUser } = useAuth();
+    const { user, setUser, loading } = useAuth();
     const [isDarkMode, setIsDarkMode] = useState(true);
-    const [name, setName] = useState(user?.name || '');
-    const [email, setEmail] = useState(user?.email || '');
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [message, setMessage] = useState('');
@@ -18,6 +18,18 @@ const Settings = () => {
     const [uploadingResume, setUploadingResume] = useState(false);
     const resumeInputRef = useRef(null);
 
+    // Initial load effect
+    useEffect(() => {
+        if (user) {
+            setName(user.name || '');
+            setEmail(user.email || '');
+        }
+    }, [user]);
+
+    if (loading) {
+        return <div className="p-8 text-center text-text">Loading settings...</div>;
+    }
+
     useEffect(() => {
         // Initialize state based on current class
         if (document.documentElement.classList.contains('dark')) {
@@ -27,12 +39,7 @@ const Settings = () => {
         }
     }, []);
 
-    useEffect(() => {
-        if (user) {
-            setName(user.name);
-            setEmail(user.email);
-        }
-    }, [user]);
+
 
     const toggleTheme = () => {
         const newMode = !isDarkMode;

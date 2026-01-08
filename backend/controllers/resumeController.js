@@ -26,6 +26,7 @@ const uploadResume = asyncHandler(async (req, res) => {
     // This maintains the feature "resume upload with AI insights" simulation
     const atsScore = Math.floor(Math.random() * (95 - 70) + 70);
 
+    console.log('Processing resume upload for:', req.file.originalname);
     const resume = await Resume.create({
         user: req.user._id,
         name: name || req.file.originalname,
