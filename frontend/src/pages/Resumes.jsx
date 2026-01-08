@@ -171,14 +171,14 @@ const Resumes = () => {
                             {selectedFile ? selectedFile.name : "Click to browse or drag file here"}
                         </p>
                         <p className="text-sm text-muted">
-                            {selectedFile ? `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB` : "Supports PDF, DOCX (Max 5MB)"}
+                            {selectedFile ? `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB` : "Supports PDF Only (Max 5MB)"}
                         </p>
                         <input
                             type="file"
                             ref={fileInputRef}
                             onChange={handleFileSelect}
                             className="hidden"
-                            accept=".pdf,.docx,.doc"
+                            accept=".pdf"
                         />
                     </div>
 
