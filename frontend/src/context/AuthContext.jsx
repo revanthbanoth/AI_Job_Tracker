@@ -17,30 +17,30 @@ export const AuthProvider = ({ children }) => {
         const verifyToken = async () => {
             setLoading(true);
             const token = localStorage.getItem('token');
-            const userInfo = localStorage.getItem('userInfo');
 
-            if (token || userInfo) {
-                try {
-                    // Call backend to verify token validity
-                    // API interceptor will attach the token automatically
-                    const { data } = await api.get('/api/auth/verify');
-
-                    // If successful, data contains user info (without token usually)
-                    // We preserve the local token
-                    const validUser = { ...data, token: token || JSON.parse(userInfo).token };
-
-                    setUser(validUser);
-                    // Update localStorage to keep it fresh
-                    localStorage.setItem('userInfo', JSON.stringify(validUser));
-                } catch (error) {
-                    console.error("Token verification failed:", error);
-                    // If verification fails (401), clear everything
-                    localStorage.removeItem('userInfo');
-                    localStorage.removeItem('token');
-                    setUser(null);
-                }
+            if (!token) {
+                setLoading(false);
+                return;
             }
-            setLoading(false);
+
+            try {
+                // Token exists, verify with backend
+                // api interceptor will attach the token
+                const { data } = await api.get('/api/auth/verify');
+
+                // If effective, keep user logged in
+                const validUser = { ...data, token };
+                setUser(validUser);
+                localStorage.setItem('userInfo', JSON.stringify(validUser));
+            } catch (error) {
+                console.error("Token verification failed:", error);
+                // Token invalid/expired -> Clear everything
+                setUser(null);
+                localStorage.removeItem('token');
+                localStorage.removeItem('userInfo');
+            } finally {
+                setLoading(false);
+            }
         };
 
         verifyToken();
