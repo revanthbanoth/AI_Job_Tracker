@@ -75,6 +75,7 @@ const Resumes = () => {
             setSelectedFile(null);
         } catch (error) {
             console.error('Failed to upload resume', error);
+            alert(error.response?.data?.message || 'Failed to upload resume');
         }
     }
 

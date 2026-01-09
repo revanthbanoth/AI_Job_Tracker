@@ -22,19 +22,36 @@ const uploadResume = asyncHandler(async (req, res) => {
 
     let result;
     try {
-        // Upload to Cloudinary
-        result = await cloudinary.uploader.upload(req.file.path, {
-            folder: 'resumes',
-            resource_type: 'auto'
-        });
+        // Upload to Cloudinary from memory buffer
+        const uploadFromBuffer = (buffer) => {
+            return new Promise((resolve, reject) => {
+                const stream = cloudinary.uploader.upload_stream(
+                    {
+                        folder: 'resumes',
+                        resource_type: 'auto'
+                    },
+                    (error, result) => {
+                        if (error) {
+                            console.error('Cloudinary Upload Error:', error);
+                            reject(error);
+                        } else {
+                            resolve(result);
+                        }
+                    }
+                );
+                // Write buffer to stream
+                const Readable = require('stream').Readable;
+                const bufferStream = new Readable();
+                bufferStream.push(buffer);
+                bufferStream.push(null);
+                bufferStream.pipe(stream);
+            });
+        };
 
-        // Remove file from local storage
-        fs.unlinkSync(req.file.path);
+        result = await uploadFromBuffer(req.file.buffer);
+
     } catch (error) {
-        // Cleanup local file if upload fails
-        if (req.file.path && fs.existsSync(req.file.path)) {
-            fs.unlinkSync(req.file.path);
-        }
+        console.error('Upload Failed:', error);
         res.status(500);
         throw new Error('Image upload failed: ' + error.message);
     }
