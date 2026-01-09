@@ -47,6 +47,9 @@ app.get('/', (req, res) => {
     res.send('API is running...');
 });
 
+// Serve static files from uploads directory
+app.use('/uploads', express.static('uploads'));
+
 app.use('/api/auth', authRoutes);
 app.use('/api/resumes', require('./routes/resumeRoutes'));
 app.use('/api/applications', require('./routes/applicationRoutes'));
