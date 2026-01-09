@@ -5,8 +5,8 @@ const ProtectedRoute = ({ children }) => {
     const { user, loading } = useAuth();
     const location = useLocation();
 
+    // While checking authentication status, show a loader
     if (loading) {
-        // You can replace this with a proper Spinner component
         return (
             <div className="flex items-center justify-center min-h-screen bg-background text-text">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -14,11 +14,13 @@ const ProtectedRoute = ({ children }) => {
         );
     }
 
+    // If no user is found after loading, redirect to login
+    // We check user existence which confirms token validaton from AuthContext
     if (!user) {
-        // Redirect to login but save the attempted location
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
+    // If authenticated, render the protected component
     return children;
 };
 

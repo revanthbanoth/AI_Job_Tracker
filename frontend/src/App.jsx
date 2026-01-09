@@ -7,8 +7,7 @@ import Applications from './pages/Applications';
 import Resumes from './pages/Resumes';
 import Settings from './pages/Settings';
 import Layout from './components/Layout';
-import { useAuth } from './context/AuthContext';
-
+// import { useAuth } from './context/AuthContext'; // Not needed directly here if using ProtectedRoute
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -26,11 +25,13 @@ function App() {
     <div className="min-h-screen bg-background text-text font-sans flex flex-col">
       <div className="flex-grow">
         <Routes>
+          {/* Public Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
 
-          {/* Protected Routes wrapped in Layout */}
+          {/* Protected Routes */}
+          {/* Wrap all private routes with ProtectedRoute */}
           <Route
             path="/"
             element={
@@ -44,6 +45,9 @@ function App() {
             <Route path="resumes" element={<Resumes />} />
             <Route path="settings" element={<Settings />} />
           </Route>
+
+          {/* Catch all - Redirect to Login or Dashboard */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
       <footer className="py-2 text-center text-xs text-muted/50 border-t border-white/5">
