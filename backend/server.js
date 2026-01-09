@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 // Force restart for DB change and CORS update
 const dotenv = require('dotenv');
 
@@ -43,9 +44,8 @@ app.use(cors({
     credentials: true,
 }));
 
-app.get('/', (req, res) => {
-    res.send('API is running...');
-});
+// Serve static files from frontend/dist
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
 // Serve static files from uploads directory
 app.use('/uploads', express.static('uploads'));
@@ -54,6 +54,12 @@ app.use('/api/auth', authRoutes);
 app.use('/api/resumes', require('./routes/resumeRoutes'));
 app.use('/api/applications', require('./routes/applicationRoutes'));
 app.use('/api/analysis', require('./routes/analysisRoutes'));
+
+app.get("*", (req, res) => {
+    res.sendFile(
+        path.join(__dirname, "../frontend/dist/index.html")
+    );
+});
 
 app.use(notFound);
 app.use(errorHandler);
