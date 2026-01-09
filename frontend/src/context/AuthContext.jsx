@@ -9,10 +9,6 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-
-
-
-
     useEffect(() => {
         const verifyToken = async () => {
             // Cleanup legacy localStorage tokens to ensure strict session security
