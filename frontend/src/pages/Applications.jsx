@@ -134,7 +134,7 @@ Education: Bachelor of Science in Computer Science.`);
                 match_score: 0,
                 matched_skills: [],
                 missing_skills: [],
-                suggestions: ["Connection failed. Backend could not reach AI service. Check Render logs."]
+                suggestions: ["Analysis failed. Please try again later."]
             });
         } finally {
             setAnalyzing(false);
