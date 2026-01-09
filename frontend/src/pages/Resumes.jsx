@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import api from '../services/api';
 import Modal from '../components/Modal';
-import { UploadCloud, FileText, Trash2 } from 'lucide-react';
+import { UploadCloud, FileText, Trash2, Eye } from 'lucide-react';
 
 const Resumes = () => {
     const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -26,7 +26,8 @@ const Resumes = () => {
                     size: r.size || 'Unknown size',
                     atsScore: r.atsScore || 0,
                     uploadDate: r.createdAt ? new Date(r.createdAt).toLocaleDateString() : 'Recent',
-                    status: r.status
+                    status: r.status,
+                    resumeUrl: r.resumeUrl
                 }));
                 setResumes(formattedResumes);
             } catch (error) {
@@ -65,7 +66,8 @@ const Resumes = () => {
                 size: data.size,
                 uploadDate: new Date(data.createdAt).toLocaleDateString(),
                 atsScore: data.atsScore,
-                status: data.status
+                status: data.status,
+                resumeUrl: data.resumeUrl
             };
 
             setResumes([newResume, ...resumes]);
@@ -148,6 +150,17 @@ const Resumes = () => {
                                     </div>
                                 </div>
                                 <div className="h-8 w-[1px] bg-border"></div>
+                                {resume.resumeUrl && (
+                                    <a
+                                        href={resume.resumeUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="p-2 text-muted hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                        title="View Resume"
+                                    >
+                                        <Eye size={18} />
+                                    </a>
+                                )}
                                 <button
                                     onClick={() => handleDelete(resume.id)}
                                     className="p-2 text-muted hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"

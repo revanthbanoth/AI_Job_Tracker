@@ -1,5 +1,7 @@
 const asyncHandler = require('express-async-handler');
 const Resume = require('../models/Resume');
+const cloudinary = require('../utils/cloudinary');
+const fs = require('fs');
 
 // @desc    Get user resumes
 // @route   GET /api/resumes
@@ -18,6 +20,25 @@ const uploadResume = asyncHandler(async (req, res) => {
         throw new Error('Please upload a file');
     }
 
+    let result;
+    try {
+        // Upload to Cloudinary
+        result = await cloudinary.uploader.upload(req.file.path, {
+            folder: 'resumes',
+            resource_type: 'auto'
+        });
+
+        // Remove file from local storage
+        fs.unlinkSync(req.file.path);
+    } catch (error) {
+        // Cleanup local file if upload fails
+        if (req.file.path && fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+        }
+        res.status(500);
+        throw new Error('Image upload failed: ' + error.message);
+    }
+
     const { name } = req.body;
     // Calculate realistic size string
     const sizeInMB = (req.file.size / 1024 / 1024).toFixed(2);
@@ -33,7 +54,8 @@ const uploadResume = asyncHandler(async (req, res) => {
         fileName: req.file.filename,
         size: `${sizeInMB} MB`,
         atsScore: atsScore,
-        status: 'Analyzed'
+        status: 'Analyzed',
+        resumeUrl: result.secure_url
     });
 
     if (resume) {
@@ -65,8 +87,28 @@ const deleteResume = asyncHandler(async (req, res) => {
     }
 });
 
+// @desc    Download resume (Redirect to Cloudinary)
+// @route   GET /api/resumes/:id/download
+// @access  Private
+const downloadResume = asyncHandler(async (req, res) => {
+    const resume = await Resume.findById(req.params.id);
+
+    if (resume && resume.resumeUrl) {
+        // Check authorization if strictly private
+        if (resume.user.toString() !== req.user._id.toString()) {
+            res.status(401);
+            throw new Error('Not authorized');
+        }
+        res.redirect(resume.resumeUrl);
+    } else {
+        res.status(404);
+        throw new Error('Resume not found');
+    }
+});
+
 module.exports = {
     getResumes,
     uploadResume,
-    deleteResume
+    deleteResume,
+    downloadResume
 };

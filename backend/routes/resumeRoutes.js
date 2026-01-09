@@ -3,7 +3,8 @@ const router = express.Router();
 const {
     getResumes,
     uploadResume,
-    deleteResume
+    deleteResume,
+    downloadResume
 } = require('../controllers/resumeController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -15,5 +16,7 @@ router.route('/')
 
 router.route('/:id')
     .delete(protect, deleteResume);
+
+router.get('/:id/download', protect, downloadResume);
 
 module.exports = router;

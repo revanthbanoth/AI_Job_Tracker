@@ -23,6 +23,10 @@ const resumeSchema = mongoose.Schema({
     status: {
         type: String,
         default: 'Analyzed'
+    },
+    resumeUrl: {
+        type: String,
+        required: true
     }
 }, {
     timestamps: true

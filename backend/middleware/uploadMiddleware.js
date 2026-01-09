@@ -22,11 +22,11 @@ const storage = multer.diskStorage({
 function checkFileType(file, cb) {
     // Allowed ext
     // Allowed ext
-    const filetypes = /pdf/;
+    const filetypes = /pdf|doc|docx/;
     // Check ext
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
     // Check mime
-    const mimetype = filetypes.test(file.mimetype) || file.mimetype === 'application/pdf';
+    const mimetype = filetypes.test(file.mimetype) || file.mimetype === 'application/pdf' || file.mimetype === 'application/msword' || file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
     if (mimetype && extname) {
         return cb(null, true);
