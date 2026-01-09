@@ -9,14 +9,7 @@ import Settings from './pages/Settings';
 import Layout from './components/Layout';
 import { useAuth } from './context/AuthContext';
 
-const ProtectedRoute = ({ children }) => {
-  const { user, loading } = useAuth();
-
-  if (loading) return <div>Loading...</div>;
-  if (!user) return <Navigate to="/login" />;
-
-  return children;
-};
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   // Initialize theme
