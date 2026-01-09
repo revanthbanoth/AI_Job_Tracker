@@ -14,12 +14,36 @@ export const AuthProvider = ({ children }) => {
 
 
     useEffect(() => {
-        const userInfo = localStorage.getItem('userInfo');
-        if (userInfo) {
-            const parsedUser = JSON.parse(userInfo);
-            setUser(parsedUser);
-        }
-        setLoading(false);
+        const verifyToken = async () => {
+            setLoading(true);
+            const token = localStorage.getItem('token');
+            const userInfo = localStorage.getItem('userInfo');
+
+            if (token || userInfo) {
+                try {
+                    // Call backend to verify token validity
+                    // API interceptor will attach the token automatically
+                    const { data } = await api.get('/api/auth/verify');
+
+                    // If successful, data contains user info (without token usually)
+                    // We preserve the local token
+                    const validUser = { ...data, token: token || JSON.parse(userInfo).token };
+
+                    setUser(validUser);
+                    // Update localStorage to keep it fresh
+                    localStorage.setItem('userInfo', JSON.stringify(validUser));
+                } catch (error) {
+                    console.error("Token verification failed:", error);
+                    // If verification fails (401), clear everything
+                    localStorage.removeItem('userInfo');
+                    localStorage.removeItem('token');
+                    setUser(null);
+                }
+            }
+            setLoading(false);
+        };
+
+        verifyToken();
     }, []);
 
 

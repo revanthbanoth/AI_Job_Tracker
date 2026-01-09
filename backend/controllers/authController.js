@@ -107,9 +107,31 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     }
 });
 
+// @desc    Verify user token using auth middleware
+// @route   GET /api/auth/verify
+// @access  Private
+const verifyUser = asyncHandler(async (req, res) => {
+    // If we reach here, the 'protect' middleware has already verified the token
+    // and attached the user to req.user
+    const user = await User.findById(req.user._id).select('-password');
+
+    if (user) {
+        res.json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            // We can optionally refresh the token here if needed, but for now just verification
+        });
+    } else {
+        res.status(401);
+        throw new Error('User not found');
+    }
+});
+
 module.exports = {
     authUser,
     registerUser,
     logoutUser,
     updateUserProfile,
+    verifyUser
 };
