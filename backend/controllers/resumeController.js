@@ -53,6 +53,12 @@ const uploadResume = asyncHandler(async (req, res) => {
     } catch (error) {
         console.error('Upload Failed:', error);
         res.status(500);
+
+        // Handle specific Cloudinary config error
+        if (error.message && error.message.includes('Must supply api_key')) {
+            throw new Error('Server Config Error: Cloudinary API Key missing. Please check Render environment variables.');
+        }
+
         throw new Error('Image upload failed: ' + error.message);
     }
 
