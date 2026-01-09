@@ -15,8 +15,12 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         const verifyToken = async () => {
+            // Cleanup legacy localStorage tokens to ensure strict session security
+            localStorage.removeItem('token');
+            localStorage.removeItem('userInfo');
+
             setLoading(true);
-            const token = localStorage.getItem('token');
+            const token = sessionStorage.getItem('token');
 
             if (!token) {
                 setLoading(false);
@@ -31,13 +35,13 @@ export const AuthProvider = ({ children }) => {
                 // If effective, keep user logged in
                 const validUser = { ...data, token };
                 setUser(validUser);
-                localStorage.setItem('userInfo', JSON.stringify(validUser));
+                sessionStorage.setItem('userInfo', JSON.stringify(validUser));
             } catch (error) {
                 console.error("Token verification failed:", error);
                 // Token invalid/expired -> Clear everything
                 setUser(null);
-                localStorage.removeItem('token');
-                localStorage.removeItem('userInfo');
+                sessionStorage.removeItem('token');
+                sessionStorage.removeItem('userInfo');
             } finally {
                 setLoading(false);
             }
@@ -51,8 +55,8 @@ export const AuthProvider = ({ children }) => {
     const login = async (email, password) => {
         try {
             const { data } = await api.post(`/api/auth/login`, { email, password });
-            localStorage.setItem('userInfo', JSON.stringify(data));
-            localStorage.setItem('token', data.token);
+            sessionStorage.setItem('userInfo', JSON.stringify(data));
+            sessionStorage.setItem('token', data.token);
             setUser(data);
             return data;
         } catch (error) {
@@ -64,8 +68,8 @@ export const AuthProvider = ({ children }) => {
     const register = async (name, email, password) => {
         try {
             const { data } = await api.post(`/api/auth/register`, { name, email, password });
-            localStorage.setItem('userInfo', JSON.stringify(data));
-            localStorage.setItem('token', data.token);
+            sessionStorage.setItem('userInfo', JSON.stringify(data));
+            sessionStorage.setItem('token', data.token);
             setUser(data);
             return data;
         } catch (error) {
@@ -77,8 +81,8 @@ export const AuthProvider = ({ children }) => {
     const logout = async () => {
         try {
             await api.post(`/api/auth/logout`);
-            localStorage.removeItem('userInfo');
-            localStorage.removeItem('token');
+            sessionStorage.removeItem('userInfo');
+            sessionStorage.removeItem('token');
             setUser(null);
         } catch (error) {
             console.error(error);
