@@ -29,8 +29,10 @@ const uploadResume = asyncHandler(async (req, res) => {
                     {
                         folder: 'resumes',
                         resource_type: 'raw',
-                        format: 'pdf', // Explicitly request PDF format (helps with content-type)
-                        use_filename: true // Try to use the original filename if possible
+                        type: 'upload',
+                        access_mode: 'public',
+                        format: 'pdf',
+                        use_filename: true
                     },
                     (error, result) => {
                         if (error) {
