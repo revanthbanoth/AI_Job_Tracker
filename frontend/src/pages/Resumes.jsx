@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import api from '../services/api';
 import Modal from '../components/Modal';
-import { UploadCloud, FileText, Trash2, Eye } from 'lucide-react';
+import { UploadCloud, FileText, Trash2 } from 'lucide-react';
 
 const Resumes = () => {
     const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -151,16 +151,19 @@ const Resumes = () => {
                                     </div>
                                 </div>
                                 <div className="h-8 w-[1px] bg-border"></div>
-                                {resume.resumeUrl && (
+                                {resume.resumeUrl ? (
                                     <a
                                         href={resume.resumeUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="p-2 text-muted hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                                        title="View Resume"
+                                        className="px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
                                     >
-                                        <Eye size={18} />
+                                        Download Resume
                                     </a>
+                                ) : (
+                                    <span className="text-sm text-muted italic">
+                                        Unavailable
+                                    </span>
                                 )}
                                 <button
                                     onClick={() => handleDelete(resume.id)}
