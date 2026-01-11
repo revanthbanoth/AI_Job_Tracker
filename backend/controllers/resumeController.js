@@ -27,11 +27,9 @@ const uploadResume = asyncHandler(async (req, res) => {
             return new Promise((resolve, reject) => {
                 const stream = cloudinary.uploader.upload_stream(
                     {
-                        folder: 'resumes',
-                        resource_type: 'raw',
+                        resource_type: 'auto',
                         type: 'upload',
                         access_mode: 'public',
-                        format: 'pdf',
                         use_filename: true
                     },
                     (error, result) => {
