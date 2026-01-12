@@ -45,13 +45,14 @@ const Applications = () => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                // Fetch Applications
-                // Use a catch block to ensure we always return an array even if 404/500
-                const appsRes = await api.get(`/api/applications`).catch(e => ({ data: [] }));
+                // Fetch Data in Parallel
+                const [appsRes, resumesRes] = await Promise.all([
+                    api.get(`/api/applications`).catch(e => ({ data: [] })),
+                    api.get(`/api/resumes`).catch(e => ({ data: [] }))
+                ]);
 
-                // Validate data is array
+                // Validate and Format Applications
                 const appsData = Array.isArray(appsRes.data) ? appsRes.data : [];
-
                 const formattedApps = appsData.map(app => ({
                     id: app._id,
                     company: app.company || 'Unknown',
@@ -63,10 +64,9 @@ const Applications = () => {
                 }));
                 setApplications(formattedApps);
 
-                // Fetch Resumes
-                const resumesRes = await api.get(`/api/resumes`).catch(e => ({ data: [] }));
-                // Validate resumes data is array
-                setResumes(Array.isArray(resumesRes.data) ? resumesRes.data : []);
+                // Validate and Format Resumes
+                const resumesData = Array.isArray(resumesRes.data) ? resumesRes.data : [];
+                setResumes(resumesData);
 
             } catch (error) {
                 console.error('Failed to fetch data', error);

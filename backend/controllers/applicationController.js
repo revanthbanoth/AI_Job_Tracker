@@ -5,7 +5,9 @@ const Application = require('../models/Application');
 // @route   GET /api/applications
 // @access  Private
 const getApplications = asyncHandler(async (req, res) => {
-    const applications = await Application.find({ user: req.user._id }).sort({ createdAt: -1 });
+    const applications = await Application.find({ user: req.user._id })
+        .sort({ createdAt: -1 })
+        .lean();
     res.json(applications);
 });
 

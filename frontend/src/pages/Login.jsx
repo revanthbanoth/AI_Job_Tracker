@@ -9,13 +9,18 @@ const Login = () => {
     const navigate = useNavigate();
     const [error, setError] = useState('');
 
+    const [loading, setLoading] = useState(false);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
+        setError('');
         try {
             await login(email, password);
             navigate('/');
         } catch (err) {
             setError(err.response?.data?.message || 'Login failed');
+            setLoading(false);
         }
     };
 
@@ -41,6 +46,7 @@ const Login = () => {
                             placeholder="you@example.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
+                            disabled={loading}
                         />
                     </div>
                     <div>
@@ -55,10 +61,20 @@ const Login = () => {
                             placeholder="••••••••"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
+                            disabled={loading}
                         />
                     </div>
-                    <button type="submit" className="w-full py-3 bg-gradient-to-r from-primary to-secondary hover:opacity-90 rounded-lg font-bold text-white shadow-lg shadow-primary/25 transition-all transform active:scale-[0.98]">
-                        Login
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full py-3 bg-gradient-to-r from-primary to-secondary hover:opacity-90 rounded-lg font-bold text-white shadow-lg shadow-primary/25 transition-all transform active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none flex justify-center items-center gap-2"
+                    >
+                        {loading ? (
+                            <>
+                                <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                Logging in...
+                            </>
+                        ) : 'Login'}
                     </button>
                 </form>
                 <div className="mt-6 text-center text-sm text-gray-400">

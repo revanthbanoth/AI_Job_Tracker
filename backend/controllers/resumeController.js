@@ -7,7 +7,9 @@ const fs = require('fs');
 // @route   GET /api/resumes
 // @access  Private
 const getResumes = asyncHandler(async (req, res) => {
-    const resumes = await Resume.find({ user: req.user._id }).sort({ createdAt: -1 });
+    const resumes = await Resume.find({ user: req.user._id })
+        .sort({ createdAt: -1 })
+        .lean();
     res.json(resumes);
 });
 

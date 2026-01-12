@@ -113,7 +113,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
 const verifyUser = asyncHandler(async (req, res) => {
     // If we reach here, the 'protect' middleware has already verified the token
     // and attached the user to req.user
-    const user = await User.findById(req.user._id).select('-password');
+    const user = await User.findById(req.user._id).select('-password').lean();
 
     if (user) {
         res.json({
