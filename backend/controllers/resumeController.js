@@ -31,7 +31,11 @@ const uploadResume = asyncHandler(async (req, res) => {
                         resource_type: 'raw',
                         type: 'upload',
                         access_mode: 'public',
-                        use_filename: true
+                        // Force using the original filename with extension as the public_id
+                        // This ensures the downloaded file has the correct .pdf extension
+                        public_id: req.file.originalname,
+                        use_filename: true,
+                        unique_filename: true // Ensure uniqueness if needed, or false if you want overwrite
                     },
                     (error, result) => {
                         if (error) {
