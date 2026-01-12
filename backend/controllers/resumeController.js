@@ -78,6 +78,15 @@ const uploadResume = asyncHandler(async (req, res) => {
     const atsScore = Math.floor(Math.random() * (95 - 70) + 70);
 
     console.log('Processing resume upload for:', req.file.originalname);
+    // Generate a Force Download URL
+    // This adds 'fl_attachment' to the URL, which tells Cloudinary to send Content-Disposition: attachment
+    // This prevents the browser from trying (and failing) to preview the raw file
+    const downloadUrl = cloudinary.url(result.public_id, {
+        resource_type: 'raw',
+        secure: true,
+        flags: 'attachment'
+    });
+
     const resume = await Resume.create({
         user: req.user._id,
         name: name || req.file.originalname,
@@ -85,7 +94,7 @@ const uploadResume = asyncHandler(async (req, res) => {
         size: `${sizeInMB} MB`,
         atsScore: atsScore,
         status: 'Analyzed',
-        resumeUrl: result.secure_url
+        resumeUrl: downloadUrl // Save the download-forced URL
     });
 
     if (resume) {
