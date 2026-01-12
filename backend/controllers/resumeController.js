@@ -22,7 +22,12 @@ const uploadResume = asyncHandler(async (req, res) => {
 
     let result;
     try {
-        // Upload to Cloudinary from memory buffer
+        // Sanitize filename to prevent URL issues (401 errors on raw files with special chars)
+        const cleanFileName = req.file.originalname.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_.-]/g, '');
+        const finalPublicId = cleanFileName.toLowerCase().endsWith('.pdf')
+            ? cleanFileName
+            : cleanFileName + '.pdf';
+
         const uploadFromBuffer = (buffer) => {
             return new Promise((resolve, reject) => {
                 const stream = cloudinary.uploader.upload_stream(
@@ -31,11 +36,10 @@ const uploadResume = asyncHandler(async (req, res) => {
                         resource_type: 'raw',
                         type: 'upload',
                         access_mode: 'public',
-                        // Force using the original filename with extension as the public_id
-                        // This ensures the downloaded file has the correct .pdf extension
-                        public_id: req.file.originalname,
+                        // Use sanitized name with extension
+                        public_id: finalPublicId,
                         use_filename: true,
-                        unique_filename: true // Ensure uniqueness if needed, or false if you want overwrite
+                        unique_filename: true
                     },
                     (error, result) => {
                         if (error) {
