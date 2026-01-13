@@ -2,6 +2,7 @@ const asyncHandler = require('express-async-handler');
 const Resume = require('../models/Resume');
 const cloudinary = require('../utils/cloudinary');
 const fs = require('fs');
+const path = require('path');
 
 // @desc    Get user resumes
 // @route   GET /api/resumes
@@ -28,17 +29,28 @@ const uploadResume = asyncHandler(async (req, res) => {
         const cleanFileName = req.file.originalname.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_.-]/g, '');
         // For 'auto' resource_type (usually images/PDFs), Cloudinary adds the extension automatically.
         // We strip .pdf from the end of public_id to avoid double extension (file.pdf.pdf)
-        const finalPublicId = cleanFileName.replace(/\.pdf$/i, '');
+        // Determine resource type and public ID based on file type
+        const isPdf = req.file.mimetype === 'application/pdf';
+        const resourceType = isPdf ? 'image' : 'raw';
+
+        // Remove extension from public_id for 'image' type (Cloudinary adds it), keep for 'raw'
+        let finalPublicId = cleanFileName.replace(/\.pdf$/i, '');
+        if (!isPdf) {
+            finalPublicId = cleanFileName; // Start with clean name
+            // Ensure extension for raw files
+            if (!finalPublicId.toLowerCase().endsWith(path.extname(req.file.originalname).toLowerCase())) {
+                finalPublicId += path.extname(req.file.originalname).toLowerCase();
+            }
+        }
 
         const uploadFromBuffer = (buffer) => {
             return new Promise((resolve, reject) => {
                 const stream = cloudinary.uploader.upload_stream(
                     {
                         folder: 'resumes',
-                        resource_type: 'auto', // Auto-detect (PDFs become 'image' type, DOC/DOCX 'raw')
+                        resource_type: resourceType,
                         type: 'upload',
                         access_mode: 'public',
-                        // Use sanitized name with extension
                         public_id: finalPublicId,
                         use_filename: true,
                         unique_filename: true
@@ -83,6 +95,19 @@ const uploadResume = asyncHandler(async (req, res) => {
     // This maintains the feature "resume upload with AI insights" simulation
     const atsScore = Math.floor(Math.random() * (95 - 70) + 70);
 
+    // Generate accurate Resume URL
+    // For PDFs (image type), we use fl_attachment to force download.
+    // For Raw files, we use secure_url directly.
+    let resumeUrl = result.secure_url;
+
+    if (req.file.mimetype === 'application/pdf') {
+        resumeUrl = cloudinary.url(result.public_id, {
+            resource_type: 'image',
+            secure: true,
+            flags: 'attachment'
+        });
+    }
+
     console.log('Processing resume upload for:', req.file.originalname);
     const resume = await Resume.create({
         user: req.user._id,
@@ -91,8 +116,9 @@ const uploadResume = asyncHandler(async (req, res) => {
         size: `${sizeInMB} MB`,
         atsScore: atsScore,
         status: 'Analyzed',
-        resumeUrl: result.secure_url // Use the standard secure URL which now includes the correct .pdf extension
-    });
+        resumeUrl: resumeUrl
+
+    }); // Closing Resume.create
 
     if (resume) {
         res.status(201).json(resume);
