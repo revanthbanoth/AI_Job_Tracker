@@ -104,7 +104,8 @@ const uploadResume = asyncHandler(async (req, res) => {
         resumeUrl = cloudinary.url(result.public_id, {
             resource_type: 'image',
             secure: true,
-            flags: 'attachment'
+            flags: 'attachment',
+            format: 'pdf' // Ensure the URL ends in .pdf
         });
     }
 
