@@ -35,7 +35,7 @@ const uploadResume = asyncHandler(async (req, res) => {
                 const stream = cloudinary.uploader.upload_stream(
                     {
                         folder: 'resumes',
-                        resource_type: 'raw',
+                        resource_type: 'auto', // Auto-detect (PDFs become 'image' type, DOC/DOCX 'raw')
                         type: 'upload',
                         access_mode: 'public',
                         // Use sanitized name with extension
