@@ -26,9 +26,9 @@ const uploadResume = asyncHandler(async (req, res) => {
     try {
         // Sanitize filename to prevent URL issues (401 errors on raw files with special chars)
         const cleanFileName = req.file.originalname.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_.-]/g, '');
-        const finalPublicId = cleanFileName.toLowerCase().endsWith('.pdf')
-            ? cleanFileName
-            : cleanFileName + '.pdf';
+        // For 'auto' resource_type (usually images/PDFs), Cloudinary adds the extension automatically.
+        // We strip .pdf from the end of public_id to avoid double extension (file.pdf.pdf)
+        const finalPublicId = cleanFileName.replace(/\.pdf$/i, '');
 
         const uploadFromBuffer = (buffer) => {
             return new Promise((resolve, reject) => {
