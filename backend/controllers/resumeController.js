@@ -97,12 +97,10 @@ const uploadResume = asyncHandler(async (req, res) => {
     // For PDFs (image type), we use fl_attachment to force download.
     // For Raw files, we use secure_url directly if public, but for private we need signature.
 
-    // Generate signed download URL for raw file with attachment flag
     resumeUrl = cloudinary.url(result.public_id, {
         resource_type: 'raw',
         type: 'private', // Match private upload
         secure: true,
-        flags: 'attachment',
         sign_url: true
     });
 
