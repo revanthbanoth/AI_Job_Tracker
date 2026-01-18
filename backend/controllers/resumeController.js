@@ -105,7 +105,8 @@ const uploadResume = asyncHandler(async (req, res) => {
             resource_type: 'image',
             secure: true,
             flags: 'attachment',
-            format: 'pdf' // Ensure the URL ends in .pdf
+            format: 'pdf', // Ensure the URL ends in .pdf
+            sign_url: true
         });
     }
 
@@ -113,7 +114,7 @@ const uploadResume = asyncHandler(async (req, res) => {
     const resume = await Resume.create({
         user: req.user._id,
         name: name || req.file.originalname,
-        fileName: req.file.filename,
+        fileName: req.file.filename || req.file.originalname,
         size: `${sizeInMB} MB`,
         atsScore: atsScore,
         status: 'Analyzed',
