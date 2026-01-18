@@ -10,6 +10,8 @@ const Resumes = () => {
     const [loading, setLoading] = useState(true);
     const fileInputRef = useRef(null);
 
+    const [uploading, setUploading] = useState(false);
+
     useEffect(() => {
         const fetchResumes = async () => {
             setLoading(true);
@@ -52,6 +54,8 @@ const Resumes = () => {
         e.preventDefault();
         if (!selectedFile) return;
 
+        setUploading(true); // Start loading
+
         // Create FormData
         const formData = new FormData();
         formData.append('resume', selectedFile);
@@ -76,6 +80,8 @@ const Resumes = () => {
         } catch (error) {
             console.error('Failed to upload resume', error);
             alert(error.response?.data?.message || 'Failed to upload resume');
+        } finally {
+            setUploading(false); // End loading
         }
     }
 
@@ -206,8 +212,9 @@ const Resumes = () => {
 
                     <div className="flex justify-end gap-3">
                         <button type="button" onClick={() => { setIsUploadOpen(false); setSelectedFile(null); }} className="px-4 py-2 text-muted hover:text-text transition-colors">Cancel</button>
-                        <button type="submit" disabled={!selectedFile} className="px-4 py-2 bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg">
-                            {selectedFile ? 'Upload' : 'Select File'}
+                        <button type="submit" disabled={!selectedFile || uploading} className="px-4 py-2 bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg flex items-center gap-2">
+                            {uploading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
+                            {uploading ? 'Uploading...' : (selectedFile ? 'Upload' : 'Select File')}
                         </button>
                     </div>
                 </form>
