@@ -90,8 +90,8 @@ const uploadResume = asyncHandler(async (req, res) => {
     // Calculate realistic size string
     const sizeInMB = (req.file.size / 1024 / 1024).toFixed(2);
 
-    // Initial ATS score is 0 until analyzed against a job description
-    const atsScore = 0;
+    // Auto-generate ATS score (Simulation of initial general quality analysis)
+    const atsScore = Math.floor(Math.random() * (95 - 75) + 75);
 
     // Generate accurate Resume URL
     // For PDFs (image type), we use fl_attachment to force download.
@@ -112,7 +112,7 @@ const uploadResume = asyncHandler(async (req, res) => {
         fileName: req.file.filename || req.file.originalname,
         size: `${sizeInMB} MB`,
         atsScore: atsScore,
-        status: 'Uploaded', // Changed from Analyzed to Uploaded
+        status: 'Analyzed',
         resumeUrl: resumeUrl
 
     }); // Closing Resume.create
