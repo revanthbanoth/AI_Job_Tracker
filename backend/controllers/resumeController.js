@@ -47,8 +47,9 @@ const uploadResume = asyncHandler(async (req, res) => {
                     {
                         folder: 'resumes',
                         resource_type: resourceType,
-                        type: 'upload',
-                        access_mode: 'public',
+                        type: 'private',
+                        resource_type: 'raw',
+                        // access_mode: 'public', // REMOVED: Must be private
                         public_id: finalPublicId,
                         use_filename: true,
                         unique_filename: true
@@ -95,14 +96,15 @@ const uploadResume = asyncHandler(async (req, res) => {
 
     // Generate accurate Resume URL
     // For PDFs (image type), we use fl_attachment to force download.
-    // For Raw files, we use secure_url directly.
-    let resumeUrl = result.secure_url;
+    // For Raw files, we use secure_url directly if public, but for private we need signature.
 
-    // Generate download URL for raw file with attachment flag
+    // Generate signed download URL for raw file with attachment flag
     resumeUrl = cloudinary.url(result.public_id, {
         resource_type: 'raw',
+        type: 'private', // Match private upload
         secure: true,
-        flags: 'attachment'
+        flags: 'attachment',
+        sign_url: true
     });
 
     console.log('Processing resume upload for:', req.file.originalname);
