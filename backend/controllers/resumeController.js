@@ -30,17 +30,15 @@ const uploadResume = asyncHandler(async (req, res) => {
         // For 'auto' resource_type (usually images/PDFs), Cloudinary adds the extension automatically.
         // We strip .pdf from the end of public_id to avoid double extension (file.pdf.pdf)
         // Determine resource type and public ID based on file type
+        // Use 'raw' for proper file handling (avoids image-specific transformation errors)
+        const resourceType = 'raw';
         const isPdf = req.file.mimetype === 'application/pdf';
-        const resourceType = isPdf ? 'image' : 'raw';
 
-        // Remove extension from public_id for 'image' type (Cloudinary adds it), keep for 'raw'
-        let finalPublicId = cleanFileName.replace(/\.pdf$/i, '');
-        if (!isPdf) {
-            finalPublicId = cleanFileName; // Start with clean name
-            // Ensure extension for raw files
-            if (!finalPublicId.toLowerCase().endsWith(path.extname(req.file.originalname).toLowerCase())) {
-                finalPublicId += path.extname(req.file.originalname).toLowerCase();
-            }
+        // Ensure extension is in public_id for raw files
+        let finalPublicId = cleanFileName;
+        const ext = path.extname(req.file.originalname).toLowerCase();
+        if (!finalPublicId.toLowerCase().endsWith(ext)) {
+            finalPublicId += ext;
         }
 
         const uploadFromBuffer = (buffer) => {
@@ -100,15 +98,12 @@ const uploadResume = asyncHandler(async (req, res) => {
     // For Raw files, we use secure_url directly.
     let resumeUrl = result.secure_url;
 
-    if (req.file.mimetype === 'application/pdf') {
-        resumeUrl = cloudinary.url(result.public_id, {
-            resource_type: 'image',
-            secure: true,
-            flags: 'attachment',
-            format: 'pdf', // Ensure the URL ends in .pdf
-            sign_url: true
-        });
-    }
+    // Generate download URL for raw file with attachment flag
+    resumeUrl = cloudinary.url(result.public_id, {
+        resource_type: 'raw',
+        secure: true,
+        flags: 'attachment'
+    });
 
     console.log('Processing resume upload for:', req.file.originalname);
     const resume = await Resume.create({
