@@ -150,10 +150,12 @@ const Resumes = () => {
                             <div className="flex items-center gap-6">
                                 <div className="text-right">
                                     <div className="text-sm text-muted mb-1">ATS Score</div>
-                                    <div className={`font-bold text-lg ${resume.atsScore >= 90 ? 'text-green-500 dark:text-green-400' :
-                                        resume.atsScore >= 80 ? 'text-blue-500 dark:text-blue-400' : 'text-yellow-500 dark:text-yellow-400'
+                                    <div className={`font-bold text-lg ${resume.atsScore === 0 ? 'text-muted' :
+                                            resume.atsScore >= 90 ? 'text-green-500 dark:text-green-400' :
+                                                resume.atsScore >= 80 ? 'text-blue-500 dark:text-blue-400' :
+                                                    'text-yellow-500 dark:text-yellow-400'
                                         }`}>
-                                        {resume.atsScore}/100
+                                        {resume.atsScore > 0 ? `${resume.atsScore}/100` : 'N/A'}
                                     </div>
                                 </div>
                                 <div className="h-8 w-[1px] bg-border"></div>
