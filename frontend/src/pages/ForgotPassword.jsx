@@ -1,68 +1,28 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import api from '../services/api';
-import { useAuth } from '../context/AuthContext';
 import HeadingUnderline from '../components/HeadingUnderline';
-import { triggerOfferConfetti } from '../utils/confetti';
-import { ArrowLeft, Lock, Mail, Eye, EyeOff, CheckCircle2, AlertCircle, Loader2, ArrowRight, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Mail, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 
 const ForgotPassword = () => {
-    const navigate = useNavigate();
-    const { setUser } = useAuth();
-
     const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
+    const [submitted, setSubmitted] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [success, setSuccess] = useState(false);
-
-    // Live validation
-    const hasMinLength = password.length >= 6;
-    const passwordsMatch = password.length > 0 && password === confirmPassword;
-    const isFormValid = email.trim().length > 0 && hasMinLength && passwordsMatch;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-
-        if (!hasMinLength) {
-            setError('Password must be at least 6 characters long.');
-            return;
-        }
-
-        if (password !== confirmPassword) {
-            setError('Passwords do not match. Please verify both fields.');
-            return;
-        }
-
         setLoading(true);
 
         try {
-            const { data } = await api.post('/api/auth/forgot-password', {
-                email: email.trim(),
-                password
-            });
-
-            // Automatically save session credentials so user is authenticated
-            if (data.token) {
-                sessionStorage.setItem('token', data.token);
-                sessionStorage.setItem('userInfo', JSON.stringify(data));
-                if (setUser) {
-                    setUser(data);
-                }
-            }
-
-            setSuccess(true);
-            triggerOfferConfetti();
+            await api.post('/api/auth/forgot-password', { email: email.trim() });
+            setSubmitted(true);
         } catch (err) {
-            console.error('Password reset error:', err);
+            console.error('Forgot password error:', err);
             setError(
                 err.response?.data?.message || 
-                'Unable to reset password. Please check your registered email address and try again.'
+                'Unable to send reset instructions. Please check the email address and try again.'
             );
         } finally {
             setLoading(false);
@@ -76,11 +36,11 @@ const ForgotPassword = () => {
                 Back to Sign in
             </Link>
 
-            {!success ? (
+            {!submitted ? (
                 <>
                     <div className="text-center mb-4">
                         <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center mx-auto mb-2 shadow-warm">
-                            <Lock size={18} />
+                            <Mail size={18} />
                         </div>
                         <div className="inline-block relative">
                             <h2 className="text-xl font-serif font-bold text-text tracking-tight">
@@ -89,7 +49,7 @@ const ForgotPassword = () => {
                             <HeadingUnderline />
                         </div>
                         <p className="text-muted text-xs mt-1">
-                            Enter your registered email and choose a new password.
+                            Enter your registered email and we'll send you recovery instructions.
                         </p>
                     </div>
 
@@ -103,7 +63,6 @@ const ForgotPassword = () => {
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-3">
-                        {/* Registered Email */}
                         <div>
                             <label className="block text-[11px] font-semibold uppercase tracking-wider text-muted mb-1">
                                 Registered Email Address
@@ -113,7 +72,7 @@ const ForgotPassword = () => {
                                     type="email"
                                     required
                                     disabled={loading}
-                                    className="w-full py-2 px-3 pr-8 rounded-lg bg-background border border-border focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all text-text text-xs placeholder:text-muted/60 disabled:opacity-60"
+                                    className="w-full py-2.5 px-3 pr-8 rounded-lg bg-background border border-border focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all text-text text-xs placeholder:text-muted/60 disabled:opacity-60"
                                     placeholder="you@example.com"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
@@ -124,82 +83,18 @@ const ForgotPassword = () => {
                             </div>
                         </div>
 
-                        {/* New Password */}
-                        <div>
-                            <label className="block text-[11px] font-semibold uppercase tracking-wider text-muted mb-1">
-                                New Password
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type={showPassword ? 'text' : 'password'}
-                                    required
-                                    disabled={loading}
-                                    className="w-full py-2 px-3 pr-8 rounded-lg bg-background border border-border focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all text-text text-xs placeholder:text-muted/60 disabled:opacity-60"
-                                    placeholder="At least 6 characters"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors p-0.5"
-                                    tabIndex={-1}
-                                >
-                                    {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Confirm New Password */}
-                        <div>
-                            <label className="block text-[11px] font-semibold uppercase tracking-wider text-muted mb-1">
-                                Confirm New Password
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type={showConfirmPassword ? 'text' : 'password'}
-                                    required
-                                    disabled={loading}
-                                    className="w-full py-2 px-3 pr-8 rounded-lg bg-background border border-border focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all text-text text-xs placeholder:text-muted/60 disabled:opacity-60"
-                                    placeholder="Re-enter your new password"
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors p-0.5"
-                                    tabIndex={-1}
-                                >
-                                    {showConfirmPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Validation hints */}
-                        <div className="flex items-center justify-between text-[11px] pt-0.5">
-                            <div className={`flex items-center gap-1 transition-colors ${hasMinLength ? 'text-sage font-medium' : 'text-muted'}`}>
-                                <ShieldCheck size={12} className={hasMinLength ? 'text-sage' : 'text-muted/60'} />
-                                <span>6+ chars</span>
-                            </div>
-                            <div className={`flex items-center gap-1 transition-colors ${confirmPassword ? (passwordsMatch ? 'text-sage font-medium' : 'text-rose-500 font-medium') : 'text-muted'}`}>
-                                <ShieldCheck size={12} className={confirmPassword && passwordsMatch ? 'text-sage' : 'text-muted/60'} />
-                                <span>{confirmPassword ? (passwordsMatch ? 'Passwords match' : 'Do not match') : 'Match confirmation'}</span>
-                            </div>
-                        </div>
-
                         <button
                             type="submit"
-                            disabled={loading || !isFormValid}
+                            disabled={loading || !email.trim()}
                             className="w-full py-2.5 bg-primary hover:bg-primary-hover disabled:opacity-50 text-white rounded-lg font-medium text-xs shadow-warm hover:shadow-warm-lg transition-all flex justify-center items-center gap-1.5 cursor-pointer mt-2"
                         >
                             {loading ? (
                                 <>
                                     <Loader2 size={14} className="animate-spin" />
-                                    <span>Updating Password...</span>
+                                    <span>Sending Reset Email...</span>
                                 </>
                             ) : (
-                                <span>Change Password Directly</span>
+                                <span>Send Reset Link</span>
                             )}
                         </button>
                     </form>
@@ -209,21 +104,23 @@ const ForgotPassword = () => {
                     <div className="w-12 h-12 bg-sage/15 text-sage rounded-full flex items-center justify-center mx-auto mb-3 animate-scale-in">
                         <CheckCircle2 size={28} />
                     </div>
-                    <h2 className="text-xl font-serif font-bold text-text mb-1.5">Password Changed!</h2>
-                    <p className="text-muted text-xs mb-4 leading-relaxed">
-                        Your password for <span className="text-text font-semibold">{email}</span> has been updated successfully.
+                    <h2 className="text-xl font-serif font-bold text-text mb-1.5">Check Your Email</h2>
+                    <p className="text-muted text-xs mb-3 leading-relaxed">
+                        We've sent password reset instructions to <span className="text-text font-semibold">{email}</span>.
+                    </p>
+                    <p className="text-[11px] text-muted mb-4">
+                        Please check your inbox (and spam folder) and click the link to reset your password. The link is valid for 30 minutes.
                     </p>
                     <div className="space-y-2">
                         <button
-                            onClick={() => navigate('/')}
-                            className="w-full py-2.5 bg-primary hover:bg-primary-hover text-white rounded-lg font-medium text-xs shadow-warm hover:shadow-warm-lg transition-all flex justify-center items-center gap-2 cursor-pointer"
+                            onClick={() => setSubmitted(false)}
+                            className="text-xs text-primary hover:underline font-medium block mx-auto"
                         >
-                            <span>Go to Dashboard</span>
-                            <ArrowRight size={14} />
+                            Didn't receive it? Try again
                         </button>
                         <Link
                             to="/login"
-                            className="block w-full py-2 bg-card-subtle hover:bg-card border border-border rounded-lg text-xs font-medium text-muted hover:text-text transition-colors"
+                            className="block w-full py-2 bg-card-subtle hover:bg-card border border-border rounded-lg text-xs font-medium text-muted hover:text-text transition-colors mt-2"
                         >
                             Return to Sign In
                         </Link>

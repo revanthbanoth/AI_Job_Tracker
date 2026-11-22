@@ -177,12 +177,71 @@ const forgotPassword = asyncHandler(async (req, res) => {
         });
     }
 
-    // If only email is provided, return account confirmation
+    // If only email is provided, generate token and dispatch real reset email
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    user.resetPasswordExpire = Date.now() + 30 * 60 * 1000; // 30 minutes
+
+    await user.save();
+
+    const clientUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const resetUrl = `${clientUrl}/reset-password/${resetToken}`;
+
+    const html = `
+    <div style="font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #FAF8F5; padding: 40px 20px; color: #2D2522;">
+        <div style="max-width: 520px; margin: 0 auto; background: #FFFFFF; border-radius: 16px; border: 1px solid #EFEAE4; padding: 36px 32px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <h1 style="color: #D4663A; font-size: 24px; font-weight: 700; margin: 0 0 6px 0; letter-spacing: -0.5px;">AI Job Tracker</h1>
+                <p style="color: #8C827A; font-size: 13px; margin: 0;">Password Reset Request</p>
+            </div>
+            <p style="font-size: 15px; line-height: 1.6; margin-bottom: 16px;">Hello <strong>${user.name || 'there'}</strong>,</p>
+            <p style="font-size: 14px; line-height: 1.6; color: #5C524B; margin-bottom: 24px;">
+                We received a request to reset your password for your AI Job Tracker account. Click the button below to set a new password:
+            </p>
+            <div style="text-align: center; margin: 32px 0;">
+                <a href="${resetUrl}" target="_blank" style="background-color: #D4663A; color: #FFFFFF; text-decoration: none; padding: 14px 28px; border-radius: 10px; font-weight: 600; font-size: 14px; display: inline-block; box-shadow: 0 3px 12px rgba(212, 102, 58, 0.3);">
+                    Reset Password
+                </a>
+            </div>
+            <p style="font-size: 12px; color: #8C827A; line-height: 1.5; margin-bottom: 12px;">
+                If the button above doesn't work, copy and paste this link into your browser:
+            </p>
+            <p style="font-size: 11px; word-break: break-all; color: #D4663A; background: #FAF8F5; padding: 10px; border-radius: 6px; border: 1px solid #EFEAE4;">
+                <a href="${resetUrl}" style="color: #D4663A; text-decoration: none;">${resetUrl}</a>
+            </p>
+            <hr style="border: none; border-top: 1px solid #EFEAE4; margin: 28px 0;" />
+            <p style="font-size: 12px; color: #8C827A; line-height: 1.5; margin: 0;">
+                This link will expire in <strong>30 minutes</strong>.<br />
+                If you didn't request a password reset, you can safely ignore this email — your account remains secure.
+            </p>
+        </div>
+        <div style="text-align: center; margin-top: 20px; font-size: 11px; color: #A69E97;">
+            © ${new Date().getFullYear()} AI Job Tracker. All rights reserved.
+        </div>
+    </div>
+    `;
+
+    const text = `Hello ${user.name || 'there'},\n\nWe received a request to reset your password for AI Job Tracker.\n\nUse the link below to reset your password (valid for 30 minutes):\n${resetUrl}\n\nIf you didn't request this, you can safely ignore this email.`;
+
+    try {
+        await sendEmail({
+            to: user.email,
+            subject: 'AI Job Tracker - Password Reset Request',
+            html,
+            text,
+        });
+    } catch (emailErr) {
+        console.error('[forgotPassword] Error sending email:', emailErr);
+        user.resetPasswordToken = null;
+        user.resetPasswordExpire = null;
+        await user.save();
+        res.status(500);
+        throw new Error('Failed to send password reset email. Please try again later.');
+    }
+
     res.status(200).json({
         success: true,
-        message: 'Account verified successfully',
-        name: user.name,
-        email: user.email,
+        message: 'Password reset instructions have been sent to your email address.',
     });
 });
 
