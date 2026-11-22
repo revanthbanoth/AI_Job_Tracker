@@ -18,7 +18,7 @@ const Register = () => {
         setLoading(true);
         setError('');
         try {
-            await register(name, email, password);
+            await register(name.trim(), email.trim(), password);
             navigate('/');
         } catch (err) {
             setError(err.response?.data?.message || 'Registration could not be completed. Please check your information.');
@@ -27,39 +27,39 @@ const Register = () => {
     };
 
     return (
-        <div className="w-full max-w-md p-8 bg-card border border-border rounded-card shadow-warm-lg relative">
+        <div className="w-full max-w-[400px] px-6 py-5 bg-card border border-border rounded-2xl shadow-warm-lg relative my-auto font-sans">
             {/* Artisan Brand Icon */}
-            <div className="text-center mb-6">
-                <div className="w-12 h-12 bg-terracotta/10 text-primary rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-warm">
-                    <Compass size={26} strokeWidth={2.2} />
+            <div className="text-center mb-3">
+                <div className="w-9 h-9 bg-terracotta/10 text-primary rounded-xl flex items-center justify-center mx-auto mb-2 shadow-warm">
+                    <Compass size={20} strokeWidth={2.2} />
                 </div>
                 <div className="inline-block relative">
-                    <h2 className="text-3xl font-serif font-bold text-text tracking-tight">
+                    <h2 className="text-2xl font-serif font-bold text-text tracking-tight">
                         Begin Your Search
                     </h2>
                     <HeadingUnderline />
                 </div>
-                <p className="text-muted text-sm mt-2 font-sans">
-                    Everyone starts at zero. Let's make your hunt organized and mindful.
+                <p className="text-muted text-xs mt-1">
+                    Let's make your career hunt organized and mindful.
                 </p>
             </div>
 
             {error && (
-                <div className="p-3.5 mb-5 text-red-600 dark:text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl text-sm flex items-start gap-2.5">
-                    <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                <div className="p-2.5 mb-3 text-red-600 dark:text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg text-xs flex items-start gap-2">
+                    <AlertCircle size={14} className="shrink-0 mt-0.5" />
                     <span>{error}</span>
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-2.5">
                 <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5 font-sans">
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-muted mb-1">
                         Full Name
                     </label>
                     <input
                         type="text"
                         required
-                        className="w-full p-3 rounded-xl bg-background border border-border focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all text-text text-sm placeholder:text-muted/60"
+                        className="w-full py-2 px-3 rounded-lg bg-background border border-border focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all text-text text-xs placeholder:text-muted/60"
                         placeholder="e.g. Revanth Banoth"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
@@ -67,13 +67,13 @@ const Register = () => {
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5 font-sans">
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-muted mb-1">
                         Email Address
                     </label>
                     <input
                         type="email"
                         required
-                        className="w-full p-3 rounded-xl bg-background border border-border focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all text-text text-sm placeholder:text-muted/60"
+                        className="w-full py-2 px-3 rounded-lg bg-background border border-border focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all text-text text-xs placeholder:text-muted/60"
                         placeholder="you@example.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
@@ -81,13 +81,13 @@ const Register = () => {
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5 font-sans">
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-muted mb-1">
                         Create Password
                     </label>
                     <input
                         type="password"
                         required
-                        className="w-full p-3 rounded-xl bg-background border border-border focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all text-text text-sm placeholder:text-muted/60"
+                        className="w-full py-2 px-3 rounded-lg bg-background border border-border focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all text-text text-xs placeholder:text-muted/60"
                         placeholder="At least 6 characters"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
@@ -98,23 +98,23 @@ const Register = () => {
                 <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-3 bg-primary hover:bg-primary-hover text-white rounded-xl font-medium shadow-warm hover:shadow-warm-lg transition-all flex justify-center items-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed pt-3 mt-2"
+                    className="w-full py-2.5 bg-primary hover:bg-primary-hover text-white rounded-lg font-medium text-xs shadow-warm hover:shadow-warm-lg transition-all flex justify-center items-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed mt-2"
                 >
                     {loading ? (
                         <>
-                            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                             <span>Setting up your account...</span>
                         </>
                     ) : (
                         <>
                             <span>Create Your Account</span>
-                            <ArrowRight size={16} />
+                            <ArrowRight size={14} />
                         </>
                     )}
                 </button>
             </form>
 
-            <div className="mt-6 pt-5 border-t border-border text-center text-sm text-muted">
+            <div className="mt-3.5 pt-3 border-t border-border text-center text-xs text-muted">
                 <span>Already have an account? </span>
                 <Link to="/login" className="text-primary hover:underline font-semibold transition-colors">
                     Sign in

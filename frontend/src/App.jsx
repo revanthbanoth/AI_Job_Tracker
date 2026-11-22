@@ -14,13 +14,13 @@ import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import Footer from './components/Footer';
 
-// Public page wrapper to include consistent footer without breaking viewport
+// Public page wrapper to fit cleanly in viewport without any scrollbar
 const PublicLayout = ({ children }) => (
-  <div className="h-full w-full flex flex-col justify-between bg-background text-text overflow-y-auto">
-    <div className="flex-1 flex items-center justify-center p-4 sm:p-6 my-auto">
+  <div className="h-screen w-full flex flex-col justify-between bg-background text-text overflow-hidden select-none">
+    <div className="flex-1 flex items-center justify-center p-2 sm:p-4 min-h-0">
       {children}
     </div>
-    <Footer />
+    <Footer className="py-2 px-4 text-[11px]" />
   </div>
 );
 
