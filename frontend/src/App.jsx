@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import Applications from './pages/Applications';
 import Resumes from './pages/Resumes';
@@ -41,6 +42,7 @@ function App() {
         <Route path="/login" element={<PublicLayout><Login /></PublicLayout>} />
         <Route path="/register" element={<PublicLayout><Register /></PublicLayout>} />
         <Route path="/forgot-password" element={<PublicLayout><ForgotPassword /></PublicLayout>} />
+        <Route path="/reset-password/:token" element={<PublicLayout><ResetPassword /></PublicLayout>} />
         <Route path="/share/:token" element={<PublicLayout><ShareProgressPage /></PublicLayout>} />
 
         {/* Protected Routes inside Layout */}
