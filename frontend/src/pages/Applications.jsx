@@ -711,100 +711,98 @@ Education: Bachelor of Science in Computer Science.`);
                     }}
                 />
             ) : (
-                <motion.div
-                    variants={container}
-                    layout
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
-                >
-                    {filteredApplications.map((app) => (
-                        <motion.div
-                            key={app.id || app._id}
-                            layout
-                            initial={{ opacity: 0, y: 12 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            whileHover={{ y: -3 }}
-                            transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-                            onClick={() => setSelectedAppForDetail(app)}
-                            className="bg-card border border-border rounded-card p-5 hover:border-primary/40 hover:shadow-warm-lg transition-all duration-200 group flex flex-col justify-between h-full relative shadow-warm cursor-pointer"
-                        >
-                            <div>
-                                <div className="flex justify-between items-start mb-4 gap-2">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-11 h-11 rounded-xl bg-card-subtle border border-border flex items-center justify-center font-serif text-base font-bold text-text shadow-sm overflow-hidden relative">
-                                            <img
-                                                src={app.logo && app.logo.length > 2 ? app.logo : `https://www.google.com/s2/favicons?domain=${app.company?.toLowerCase()}.com&sz=128`}
-                                                alt={app.company}
-                                                className="w-full h-full object-contain p-2"
-                                                onError={(e) => {
-                                                    e.target.style.display = 'none';
-                                                    e.target.parentElement.querySelector('span').style.display = 'block';
-                                                }}
-                                            />
-                                            <span style={{ display: 'none' }} className="absolute inset-0 flex items-center justify-center font-serif">
-                                                {app.company ? app.company.charAt(0).toUpperCase() : '?'}
-                                            </span>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {filteredApplications.map((app) => {
+                        const cleanCompany = (app.company || '').trim();
+                        const cleanPosition = (app.position || '').trim();
+
+                        return (
+                            <div
+                                key={app.id || app._id}
+                                onClick={() => setSelectedAppForDetail(app)}
+                                className="bg-card border border-border rounded-card p-5 hover:border-primary/40 hover:shadow-warm-lg transition-all duration-200 group flex flex-col justify-between h-full relative shadow-warm cursor-pointer transform hover:-translate-y-0.5"
+                            >
+                                <div>
+                                    <div className="flex justify-between items-start mb-4 gap-2">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-11 h-11 rounded-xl bg-card-subtle border border-border flex items-center justify-center font-serif text-base font-bold text-text shadow-sm overflow-hidden relative shrink-0">
+                                                <img
+                                                    src={app.logo && app.logo.startsWith('http') ? app.logo : `https://www.google.com/s2/favicons?domain=${encodeURIComponent(cleanCompany.toLowerCase())}.com&sz=128`}
+                                                    alt={cleanCompany}
+                                                    loading="lazy"
+                                                    className="w-full h-full object-contain p-2"
+                                                    onError={(e) => {
+                                                        e.currentTarget.style.display = 'none';
+                                                        if (e.currentTarget.nextElementSibling) {
+                                                            e.currentTarget.nextElementSibling.style.display = 'flex';
+                                                        }
+                                                    }}
+                                                />
+                                                <span style={{ display: 'none' }} className="absolute inset-0 flex items-center justify-center font-serif text-text font-bold">
+                                                    {cleanCompany ? cleanCompany.charAt(0).toUpperCase() : '?'}
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <h4 className="font-serif font-bold text-base text-text leading-tight group-hover:text-primary transition-colors">{cleanCompany}</h4>
+                                                <span className="text-xs text-muted font-sans">{app.date}</span>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h4 className="font-serif font-bold text-base text-text leading-tight group-hover:text-primary transition-colors">{app.company}</h4>
-                                            <span className="text-xs text-muted font-sans">{app.date}</span>
-                                        </div>
+                                        <StatusBadge
+                                            status={app.status}
+                                            onStatusChange={(newStatus) => handleStatusChange(app.id || app._id, newStatus)}
+                                        />
                                     </div>
-                                    <StatusBadge
-                                        status={app.status}
-                                        onStatusChange={(newStatus) => handleStatusChange(app.id || app._id, newStatus)}
-                                    />
+
+                                    <div className="mb-5">
+                                        <h5 className="text-xs font-semibold text-muted uppercase tracking-wider mb-1 font-sans">Role</h5>
+                                        <p className="text-text font-medium text-sm truncate" title={cleanPosition}>{cleanPosition}</p>
+                                        {app.location && (
+                                            <p className="text-xs text-muted mt-1 truncate">📍 {app.location}</p>
+                                        )}
+                                    </div>
                                 </div>
 
-                                <div className="mb-5">
-                                    <h5 className="text-xs font-semibold text-muted uppercase tracking-wider mb-1 font-sans">Role</h5>
-                                    <p className="text-text font-medium text-sm truncate" title={app.position}>{app.position}</p>
-                                    {app.location && (
-                                        <p className="text-xs text-muted mt-1 truncate">📍 {app.location}</p>
-                                    )}
+                                <div className="flex items-center gap-2 relative z-10 pt-4 border-t border-border">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedAppForCopilot(app);
+                                            setCopilotInitialTab('cover_letter');
+                                            setIsCopilotOpen(true);
+                                        }}
+                                        className="px-3 py-2 bg-amber/15 hover:bg-amber/25 text-amber-700 dark:text-amber-400 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                                        title="Open AI Copilot for this application"
+                                    >
+                                        <Sparkles className="w-3.5 h-3.5 text-amber" />
+                                        <span>AI Copilot</span>
+                                    </button>
+
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            openAnalyzeModal(app);
+                                        }}
+                                        className="flex-1 py-2 bg-primary/10 hover:bg-primary text-primary hover:text-white rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5 group/btn cursor-pointer"
+                                    >
+                                        <Briefcase className="w-3.5 h-3.5" />
+                                        <span>Analyze</span>
+                                    </button>
+
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDelete(app.id || app._id);
+                                        }}
+                                        className="p-2 text-muted hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all cursor-pointer"
+                                        title="Delete Application"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
                                 </div>
                             </div>
-
-                            <div className="flex items-center gap-2 relative z-10 pt-4 border-t border-border">
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedAppForCopilot(app);
-                                        setCopilotInitialTab('cover_letter');
-                                        setIsCopilotOpen(true);
-                                    }}
-                                    className="px-3 py-2 bg-amber/15 hover:bg-amber/25 text-amber-700 dark:text-amber-400 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                                    title="Open AI Copilot for this application"
-                                >
-                                    <Sparkles className="w-3.5 h-3.5 text-amber" />
-                                    <span>AI Copilot</span>
-                                </button>
-
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        openAnalyzeModal(app);
-                                    }}
-                                    className="flex-1 py-2 bg-primary/10 hover:bg-primary text-primary hover:text-white rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5 group/btn cursor-pointer"
-                                >
-                                    <Briefcase className="w-3.5 h-3.5" />
-                                    <span>Analyze</span>
-                                </button>
-
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDelete(app.id || app._id);
-                                    }}
-                                    className="p-2 text-muted hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all cursor-pointer"
-                                    title="Delete Application"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-                            </div>
-                        </motion.div>
-                    ))}
-                </motion.div>
+                        );
+                    })}
+                </div>
             )}
 
             {/* Popular Companies Section */}
