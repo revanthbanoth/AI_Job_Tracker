@@ -171,7 +171,9 @@ const AtsScoreModal = ({ isOpen, onClose, resume, onScoreUpdated }) => {
                                 <span className={`text-2xl font-serif font-bold ${scoreColors.text}`}>
                                     <Counter to={currentScore} />
                                 </span>
-                                <span className="text-[10px] text-muted uppercase font-semibold">/ 100</span>
+                                <span className="text-[10px] text-muted uppercase font-semibold">
+                                    {activeTab === 'match' && matchScore !== null ? '% match' : '/ 100'}
+                                </span>
                             </div>
                         </div>
 
@@ -184,15 +186,15 @@ const AtsScoreModal = ({ isOpen, onClose, resume, onScoreUpdated }) => {
                                     {activeTab === 'history' && 'ATS Score History'}
                                 </h4>
                                 {matchScore !== null && (
-                                    <span className="text-[11px] px-2 py-0.5 rounded-md bg-sage/15 text-sage border border-sage/30 font-medium">
-                                        Job Evaluated
+                                    <span className="text-[11px] px-2.5 py-0.5 rounded-md bg-sage/15 text-sage border border-sage/30 font-medium">
+                                        Job Evaluated • Combined {overallScore}/100
                                     </span>
                                 )}
                             </div>
                             <p className="text-xs text-muted mt-1 max-w-md">
                                 {activeTab === 'health' && 'Calculated by strict deterministic code across 7 ATS criteria. Zero hallucination, 100% reproducible.'}
                                 {activeTab === 'match' && (matchScore !== null
-                                    ? `Overall Combined: 30% Health (${healthScore}) + 70% Job Match (${matchScore}) = ${overallScore}/100.`
+                                    ? `Overall Combined: 30% Health (${healthScore}) + 70% Job Match (${matchScore}%) = ${overallScore}/100.`
                                     : 'Paste a target job description below to evaluate your match coverage against required keywords.')}
                                 {activeTab === 'rewrites' && 'Actionable, metric-rich bullet alternatives to eliminate personal pronouns and weak phrasing.'}
                                 {activeTab === 'history' && 'Immutable audit trail of your deterministic ATS scores over time.'}

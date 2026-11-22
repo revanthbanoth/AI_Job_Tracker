@@ -256,9 +256,10 @@ const Resumes = () => {
             ) : (
                 <motion.div variants={container} className="grid grid-cols-1 gap-4">
                     {resumes.map((resume) => {
-                        const score = resume.atsScore;
-                        const healthScore = resume.healthScore ?? score;
+                        const healthScore = resume.healthScore ?? resume.atsScore ?? 0;
                         const matchScore = resume.matchScore;
+                        const overallScore = resume.atsScore;
+                        const score = healthScore;
                         const hasWarnings = (resume.formatAnomalies || []).length > 0;
 
                         const scoreTone =
@@ -347,7 +348,7 @@ const Resumes = () => {
                                         </div>
                                         {matchScore !== null && (
                                             <div className="text-[10px] text-sage font-medium">
-                                                Health: {healthScore} • Match: {matchScore}%
+                                                Match: {matchScore}% • Combined: {overallScore}/100
                                             </div>
                                         )}
                                     </div>

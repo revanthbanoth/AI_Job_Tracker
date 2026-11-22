@@ -64,7 +64,7 @@ const Analytics = () => {
         return {
             id: r._id,
             name: r.name,
-            atsScore: r.atsScore,
+            atsScore: r.healthScore ?? r.atsScore,
             totalLinked: linkedApps.length,
             interviews: linkedInterviews,
             rate

@@ -35,6 +35,7 @@ const getResumes = asyncHandler(async (req, res) => {
         .lean();
     const formatted = resumes.map(r => ({
         ...r,
+        healthScore: r.healthScore ?? r.atsScore ?? 75,
         resumeUrl: getSignedResumeUrl(r.resumeUrl, r.fileName)
     }));
     res.json(formatted);

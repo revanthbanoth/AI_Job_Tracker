@@ -296,7 +296,7 @@ const JobExtractorModal = ({ isOpen, onClose, onApplicationCreated, resumes = []
                                 <option value="">No linked resume</option>
                                 {resumes.map(r => (
                                     <option key={r._id} value={r._id}>
-                                        {r.name} (ATS {r.atsScore}/100)
+                                        {r.name} (ATS {r.healthScore ?? r.atsScore}/100)
                                     </option>
                                 ))}
                             </select>
