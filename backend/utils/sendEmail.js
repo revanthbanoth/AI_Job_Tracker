@@ -16,9 +16,13 @@ const sendEmail = async ({ to, subject, html, text, attachments }) => {
         try {
             const cleanKey = process.env.RESEND_API_KEY.trim();
             // Default sandbox sender or verified custom domain
-            const from = process.env.EMAIL_FROM 
-                ? process.env.EMAIL_FROM.replace(/^["']|["']$/g, '').trim()
-                : 'JobTracker <onboarding@resend.dev>';
+            let from = (process.env.RESEND_FROM || process.env.EMAIL_FROM || '').replace(/^["']|["']$/g, '').trim();
+            const isPublicDomain = /@(gmail|googlemail|yahoo|outlook|hotmail|icloud|live)\.com/i.test(from);
+
+            // Resend requires onboarding@resend.dev unless a custom domain is verified in Resend dashboard
+            if (!from || isPublicDomain || !from.includes('@')) {
+                from = 'JobTracker <onboarding@resend.dev>';
+            }
 
             const payload = {
                 from,
@@ -26,6 +30,7 @@ const sendEmail = async ({ to, subject, html, text, attachments }) => {
                 subject,
                 html,
                 text,
+                reply_to: (process.env.EMAIL_USER || 'jobtrackerai.in@gmail.com').trim(),
             };
 
             if (attachments && Array.isArray(attachments) && attachments.length > 0) {
@@ -42,13 +47,14 @@ const sendEmail = async ({ to, subject, html, text, attachments }) => {
                     'Authorization': `Bearer ${cleanKey}`,
                     'Content-Type': 'application/json',
                 },
-                timeout: 10000,
+                timeout: 15000,
             });
 
             return {
                 success: true,
                 messageId: response.data?.id,
                 provider: 'resend',
+                sender: from,
             };
         } catch (resendErr) {
             const errDetail = resendErr.response?.data?.message || resendErr.message;

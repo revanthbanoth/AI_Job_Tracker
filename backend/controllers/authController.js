@@ -415,7 +415,7 @@ const deleteAccount = asyncHandler(async (req, res) => {
 // @access  Public
 const testEmailDelivery = asyncHandler(async (req, res) => {
     const sendEmail = require('../utils/sendEmail');
-    const to = req.query.to || process.env.EMAIL_USER;
+    const to = req.query.to || process.env.EMAIL_USER || 'brevanth50@gmail.com';
     const hasResend = Boolean(process.env.RESEND_API_KEY);
     const hasBrevo = Boolean(process.env.BREVO_API_KEY);
     const hasUser = Boolean(process.env.EMAIL_USER);
@@ -460,9 +460,11 @@ const testEmailDelivery = asyncHandler(async (req, res) => {
             code: err.code || 'UNKNOWN_ERROR',
             tip: isTimeout
                 ? 'Render Free Tier blocks outbound SMTP ports (25, 465, 587) causing ETIMEDOUT. Use Resend (free at resend.com): add RESEND_API_KEY to Render to send via HTTPS Port 443 with 100% deliverability.'
-                : err.message.includes('Username and Password not accepted') 
-                    ? 'Check that your 16-character Gmail App Password in Render does not have extra spaces or typos.' 
-                    : 'Check your email provider credentials.'
+                : err.message.includes('domain is not verified')
+                    ? 'Resend requires sender onboarding@resend.dev unless a custom domain is verified in resend.com/domains.'
+                    : err.message.includes('Username and Password not accepted') 
+                        ? 'Check that your 16-character Gmail App Password in Render does not have extra spaces or typos.' 
+                        : 'Check your email provider credentials.'
         });
     }
 });

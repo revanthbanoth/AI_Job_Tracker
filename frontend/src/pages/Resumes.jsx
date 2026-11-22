@@ -149,8 +149,12 @@ const Resumes = () => {
             setSelectedResumeForInspect(newResume);
         } catch (error) {
             console.error('Failed to upload resume', error);
-            const serverMsg = error.response?.data?.message;
-            alert(serverMsg || error.message || 'Failed to upload resume. Please ensure your file is a valid PDF or Word document (max 10MB).');
+            const serverMsg = error.response?.data?.message || error.response?.data?.error;
+            const isNetworkError = error.message === 'Network Error' || error.code === 'ERR_NETWORK';
+            const displayMsg = serverMsg || (isNetworkError
+                ? 'Network connection issue. Please check your internet connection and try uploading your PDF again.'
+                : error.message) || 'Failed to upload resume. Please ensure your file is a valid PDF or Word document (max 10MB).';
+            alert(displayMsg);
         } finally {
             setUploading(false);
         }

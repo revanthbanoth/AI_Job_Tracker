@@ -82,6 +82,10 @@ const uploadResume = asyncHandler(async (req, res) => {
 
             const uploadFromBuffer = (buffer) => {
                 return new Promise((resolve, reject) => {
+                    const timer = setTimeout(() => {
+                        reject(new Error('Cloudinary upload timed out after 15s'));
+                    }, 15000);
+
                     const stream = cloudinary.uploader.upload_stream(
                         {
                             folder: 'resumes',
@@ -92,6 +96,7 @@ const uploadResume = asyncHandler(async (req, res) => {
                             unique_filename: true
                         },
                         (error, result) => {
+                            clearTimeout(timer);
                             if (error) {
                                 console.error('Cloudinary Upload Error:', error);
                                 reject(error);

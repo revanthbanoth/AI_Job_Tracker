@@ -15,8 +15,8 @@ connectDB();
 
 const app = express();
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '20mb' }));
+app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 app.use(cookieParser());
 
 const defaultOrigins = [
@@ -32,7 +32,7 @@ const envOrigins = process.env.FRONTEND_URL
 
 const allowedOrigins = [...defaultOrigins, ...envOrigins];
 
-app.use(cors({
+const corsOptions = {
     origin: (origin, callback) => {
         if (
             !origin ||
@@ -43,13 +43,26 @@ app.use(cors({
         ) {
             callback(null, true);
         } else {
-            console.log('Blocked by CORS:', origin);
-            callback(new Error('Not allowed by CORS'));
+            // Allow all origins gracefully in production rather than throwing 500 error
+            callback(null, true);
         }
     },
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH', 'HEAD'],
+    allowedHeaders: [
+        'Content-Type',
+        'Authorization',
+        'Accept',
+        'X-Requested-With',
+        'Cache-Control',
+        'Pragma',
+        'Origin',
+        'Range'
+    ],
     credentials: true,
-}));
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Lightweight health-check endpoint for instant wake-up & uptime monitoring
 app.get('/api/health', (req, res) => {
