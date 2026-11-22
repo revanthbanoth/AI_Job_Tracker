@@ -416,17 +416,20 @@ const deleteAccount = asyncHandler(async (req, res) => {
 const testEmailDelivery = asyncHandler(async (req, res) => {
     const sendEmail = require('../utils/sendEmail');
     const to = req.query.to || process.env.EMAIL_USER;
+    const hasResend = Boolean(process.env.RESEND_API_KEY);
+    const hasBrevo = Boolean(process.env.BREVO_API_KEY);
     const hasUser = Boolean(process.env.EMAIL_USER);
     const hasPass = Boolean(process.env.EMAIL_PASS);
 
-    if (!hasUser || !hasPass) {
+    if (!hasResend && !hasBrevo && (!hasUser || !hasPass)) {
         return res.status(400).json({
             success: false,
-            error: 'Missing email credentials. Set EMAIL_USER and EMAIL_PASS in Render environment variables.',
+            error: 'Missing email configuration. Render Free Tier blocks outbound SMTP (ports 465/587). To send emails for free on Render, add RESEND_API_KEY (from resend.com) to your Render environment variables.',
             config: {
+                hasResend,
+                hasBrevo,
                 hasEmailUser: hasUser,
                 hasEmailPass: hasPass,
-                service: process.env.EMAIL_SERVICE || 'gmail'
             }
         });
     }
@@ -438,7 +441,7 @@ const testEmailDelivery = asyncHandler(async (req, res) => {
             text: `Hello! This is a test email confirming that your JobTracker email service is properly configured and actively delivering real emails from Render.\n\nSent at: ${new Date().toISOString()}`,
             html: `<div style="font-family: Arial, sans-serif; padding: 20px; background: #FAF6F0; border-radius: 8px;">
                 <h2 style="color: #1F1B16; font-family: Georgia, serif;">JobTracker Email Delivery Active</h2>
-                <p style="color: #1F1B16; font-size: 14px;">This email confirms that your live Gmail SMTP credentials are functioning correctly on Render.</p>
+                <p style="color: #1F1B16; font-size: 14px;">This email confirms that your live email delivery is functioning correctly on Render.</p>
                 <p style="color: #8C827A; font-size: 12px;">Sent at: ${new Date().toISOString()}</p>
             </div>`
         });
@@ -450,13 +453,16 @@ const testEmailDelivery = asyncHandler(async (req, res) => {
         });
     } catch (err) {
         console.error('[testEmailDelivery] Error:', err);
+        const isTimeout = err.code === 'ETIMEDOUT' || (err.message && err.message.includes('timeout'));
         res.status(500).json({
             success: false,
             error: err.message,
             code: err.code || 'UNKNOWN_ERROR',
-            tip: err.message.includes('Username and Password not accepted') 
-                ? 'Check that your 16-character Gmail App Password in Render does not have extra spaces or typos.' 
-                : 'Check network access and SMTP credentials in Render.'
+            tip: isTimeout
+                ? 'Render Free Tier blocks outbound SMTP ports (25, 465, 587) causing ETIMEDOUT. Use Resend (free at resend.com): add RESEND_API_KEY to Render to send via HTTPS Port 443 with 100% deliverability.'
+                : err.message.includes('Username and Password not accepted') 
+                    ? 'Check that your 16-character Gmail App Password in Render does not have extra spaces or typos.' 
+                    : 'Check your email provider credentials.'
         });
     }
 });

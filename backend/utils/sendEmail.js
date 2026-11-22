@@ -1,23 +1,111 @@
 const nodemailer = require('nodemailer');
+const axios = require('axios');
 
 /**
- * Send an email using configured SMTP service or fallback for development/testing.
- * 
- * Supports:
- * 1. Gmail with Port 465 Direct SSL (optimal for cloud containers like Render)
- *    EMAIL_USER
- *    EMAIL_PASS (e.g. 16-character Gmail App Password)
- *    EMAIL_SERVICE (optional, defaults to gmail)
- * 2. Custom SMTP via:
- *    SMTP_HOST
- *    SMTP_PORT
- *    SMTP_USER
- *    SMTP_PASS
- *    SMTP_SECURE (true/false)
- * 3. Development / Test fallback:
- *    If no credentials are set, uses Ethereal test account or logs to console.
+ * Send an email using:
+ * 1. Resend HTTP REST API (HTTPS Port 443 - Bypasses Render free-tier SMTP blocks)
+ * 2. Brevo HTTP REST API (HTTPS Port 443 - Bypasses Render free-tier SMTP blocks)
+ * 3. Traditional SMTP (Gmail / Custom SMTP) - for localhost or paid cloud plans
+ * 4. Development test fallback (Ethereal / simulation)
  */
 const sendEmail = async ({ to, subject, html, text, attachments }) => {
+    // -------------------------------------------------------------------------
+    // OPTION 1: Resend HTTP REST API (HTTPS Port 443 - Works 100% on Render Free)
+    // -------------------------------------------------------------------------
+    if (process.env.RESEND_API_KEY) {
+        try {
+            const cleanKey = process.env.RESEND_API_KEY.trim();
+            // Default sandbox sender or verified custom domain
+            const from = process.env.EMAIL_FROM 
+                ? process.env.EMAIL_FROM.replace(/^["']|["']$/g, '').trim()
+                : 'JobTracker <onboarding@resend.dev>';
+
+            const payload = {
+                from,
+                to: Array.isArray(to) ? to : [to],
+                subject,
+                html,
+                text,
+            };
+
+            if (attachments && Array.isArray(attachments) && attachments.length > 0) {
+                payload.attachments = attachments.map(att => ({
+                    filename: att.filename,
+                    content: Buffer.isBuffer(att.content) 
+                        ? att.content.toString('base64') 
+                        : Buffer.from(att.content).toString('base64'),
+                }));
+            }
+
+            const response = await axios.post('https://api.resend.com/emails', payload, {
+                headers: {
+                    'Authorization': `Bearer ${cleanKey}`,
+                    'Content-Type': 'application/json',
+                },
+                timeout: 10000,
+            });
+
+            return {
+                success: true,
+                messageId: response.data?.id,
+                provider: 'resend',
+            };
+        } catch (resendErr) {
+            const errDetail = resendErr.response?.data?.message || resendErr.message;
+            console.error('[sendEmail Resend Error]:', errDetail);
+            throw new Error(`Resend API Error: ${errDetail}`);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // OPTION 2: Brevo HTTP REST API (HTTPS Port 443 - Works on Render Free)
+    // -------------------------------------------------------------------------
+    if (process.env.BREVO_API_KEY) {
+        try {
+            const cleanKey = process.env.BREVO_API_KEY.trim();
+            const senderEmail = (process.env.EMAIL_USER || 'jobtrackerai.in@gmail.com').trim();
+            const senderName = 'JobTracker';
+
+            const payload = {
+                sender: { name: senderName, email: senderEmail },
+                to: [{ email: to }],
+                subject,
+                htmlContent: html,
+                textContent: text,
+            };
+
+            if (attachments && Array.isArray(attachments) && attachments.length > 0) {
+                payload.attachment = attachments.map(att => ({
+                    name: att.filename,
+                    content: Buffer.isBuffer(att.content) 
+                        ? att.content.toString('base64') 
+                        : Buffer.from(att.content).toString('base64'),
+                }));
+            }
+
+            const response = await axios.post('https://api.brevo.com/v3/smtp/email', payload, {
+                headers: {
+                    'api-key': cleanKey,
+                    'Content-Type': 'application/json',
+                },
+                timeout: 10000,
+            });
+
+            return {
+                success: true,
+                messageId: response.data?.messageId,
+                provider: 'brevo',
+            };
+        } catch (brevoErr) {
+            const errDetail = brevoErr.response?.data?.message || brevoErr.message;
+            console.error('[sendEmail Brevo Error]:', errDetail);
+            throw new Error(`Brevo API Error: ${errDetail}`);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // OPTION 3: Traditional SMTP (Works locally or on non-blocked cloud hosts)
+    // -------------------------------------------------------------------------
     let transporter = null;
     let isTestAccount = false;
 
@@ -35,14 +123,12 @@ const sendEmail = async ({ to, subject, html, text, attachments }) => {
                 user: process.env.SMTP_USER.trim(),
                 pass: process.env.SMTP_PASS.trim(),
             },
-            connectionTimeout: 15000,
-            greetingTimeout: 15000,
-            socketTimeout: 20000,
+            connectionTimeout: 10000,
+            greetingTimeout: 10000,
+            socketTimeout: 15000,
         });
     } else if (cleanUser && cleanPass) {
         if (cleanService === 'gmail') {
-            // Port 465 with SSL direct is the most reliable, firewall-resistant
-            // transport on Render, AWS, and Linux cloud containers
             transporter = nodemailer.createTransport({
                 host: 'smtp.gmail.com',
                 port: 465,
@@ -51,9 +137,9 @@ const sendEmail = async ({ to, subject, html, text, attachments }) => {
                     user: cleanUser,
                     pass: cleanPass,
                 },
-                connectionTimeout: 15000,
-                greetingTimeout: 15000,
-                socketTimeout: 20000,
+                connectionTimeout: 10000,
+                greetingTimeout: 10000,
+                socketTimeout: 15000,
             });
         } else {
             transporter = nodemailer.createTransport({
@@ -62,14 +148,14 @@ const sendEmail = async ({ to, subject, html, text, attachments }) => {
                     user: cleanUser,
                     pass: cleanPass,
                 },
-                connectionTimeout: 15000,
-                greetingTimeout: 15000,
-                socketTimeout: 20000,
+                connectionTimeout: 10000,
+                greetingTimeout: 10000,
+                socketTimeout: 15000,
             });
         }
     } else {
         if (process.env.NODE_ENV === 'production') {
-            console.warn('[sendEmail WARNING] Live email credentials (EMAIL_USER / EMAIL_PASS) are missing in Render environment variables. Falling back to test mode.');
+            console.warn('[sendEmail WARNING] Live email credentials (EMAIL_USER / EMAIL_PASS or RESEND_API_KEY) are missing in Render environment variables. Falling back to test mode.');
         }
 
         // Fallback: try Ethereal test account or local simulation
@@ -132,6 +218,7 @@ const sendEmail = async ({ to, subject, html, text, attachments }) => {
         messageId: info.messageId,
         previewUrl,
         isTestAccount,
+        provider: 'smtp',
     };
 };
 
