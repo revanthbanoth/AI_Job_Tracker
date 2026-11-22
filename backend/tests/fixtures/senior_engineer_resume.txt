@@ -1,0 +1,31 @@
+Alex Rivera
+San Francisco, CA | (415) 555-0199 | alex.rivera@example.com | linkedin.com/in/alexrivera-dev | github.com/alexrivera
+
+PROFESSIONAL SUMMARY
+Senior Full Stack Engineer with 7+ years of experience designing, architecting, and scaling cloud-native web applications. Expert in TypeScript, React, Node.js, and distributed microservices with a strong focus on high-throughput backend services and web performance.
+
+PROFESSIONAL EXPERIENCE
+
+Senior Software Engineer | CloudScale Systems | San Francisco, CA
+2021 – Present
+• Architected and deployed microservices architecture handling over 10M daily API requests using Node.js, TypeScript, and Docker.
+• Spearheaded frontend performance optimization across 14 enterprise React dashboards, reducing initial page load times by 42%.
+• Engineered event-driven streaming pipeline utilizing Kafka and Redis, processing 25,000 events/sec with sub-50ms latency.
+• Mentored a team of 6 software engineers in test-driven development (TDD), driving test coverage from 60% to 92%.
+• Optimized PostgreSQL query execution plans and database indexes, reducing average query duration by 35% and saving $40k annually in cloud spend.
+
+Software Engineer | FinTech Wave | New York, NY
+2018 – 2021
+• Engineered RESTful APIs and GraphQL endpoints for mobile banking applications serving 850,000 active retail customers.
+• Implemented automated CI/CD deployment pipelines using GitHub Actions and AWS ECS, reducing deployment cycle times from 4 hours to 12 minutes.
+• Designed real-time fraud detection service integrating PostgreSQL and Redis, blocking over $1.2M in fraudulent transactions.
+• Collaborated closely with product management and UX design teams to ship 18 core customer-facing features ahead of schedule.
+
+TECHNICAL SKILLS
+• Languages: TypeScript, JavaScript, Python, SQL, Go
+• Frontend: React, Next.js, Redux, Tailwind CSS, HTML5, CSS3
+• Backend & Cloud: Node.js, Express, GraphQL, REST APIs, PostgreSQL, MongoDB, Redis, Docker, Kubernetes, AWS, CI/CD, Git
+• Architecture: Microservices, System Design, Distributed Systems, Automated Testing, Agile
+
+EDUCATION
+Bachelor of Science in Computer Science | University of California, Berkeley | 2018

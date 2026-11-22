@@ -1,0 +1,16 @@
+John Doe
+johndoe@email.com
+
+Summary
+A dynamic self-starter and rockstar developer who is a hard worker and results-driven team player looking to contribute.
+
+Experience
+
+Software Developer | Acme Corp
+• I worked on the frontend using JS and React.
+• I was responsible for fixing bugs and assisting in code reviews.
+• My duties included attending daily standup meetings with the team.
+• Did some work with Node.js and SQL database.
+
+Education
+BS in Information Technology

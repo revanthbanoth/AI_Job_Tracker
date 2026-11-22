@@ -3,6 +3,8 @@ const Resume = require('../models/Resume');
 const cloudinary = require('../utils/cloudinary');
 const fs = require('fs');
 const path = require('path');
+const { parseDocument } = require('../services/documentParser');
+const { analyzeResumeDeterministic } = require('../services/atsEngine');
 
 // @desc    Get user resumes
 // @route   GET /api/resumes
@@ -14,7 +16,7 @@ const getResumes = asyncHandler(async (req, res) => {
     res.json(resumes);
 });
 
-// @desc    Upload resume (Simulation of upload + DB Save)
+// @desc    Upload resume with deterministic ATS analysis
 // @route   POST /api/resumes
 // @access  Private
 const uploadResume = asyncHandler(async (req, res) => {
@@ -23,9 +25,20 @@ const uploadResume = asyncHandler(async (req, res) => {
         throw new Error('Please upload a file');
     }
 
-    let result;
     let resumeUrl;
     const cleanFileName = req.file.originalname.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_.-]/g, '');
+
+    // Parse the document content and inspect for structural layout anomalies
+    const parsedDoc = await parseDocument(req.file.buffer, req.file.mimetype, req.file.originalname);
+
+    // Run pure deterministic ATS Resume Health engine
+    const atsResult = analyzeResumeDeterministic(
+        parsedDoc.text,
+        '', // Initial upload has no target JD
+        parsedDoc.formatAnomalies,
+        parsedDoc.wordCount,
+        parsedDoc.pageCount
+    );
 
     const isCloudinaryConfigured = Boolean(
         process.env.CLOUDINARY_URL ||
@@ -69,7 +82,7 @@ const uploadResume = asyncHandler(async (req, res) => {
                 });
             };
 
-            result = await uploadFromBuffer(req.file.buffer);
+            const result = await uploadFromBuffer(req.file.buffer);
 
             resumeUrl = cloudinary.url(result.public_id, {
                 resource_type: 'raw',
@@ -106,19 +119,38 @@ const uploadResume = asyncHandler(async (req, res) => {
 
     const { name } = req.body;
     const sizeInMB = (req.file.size / 1024 / 1024).toFixed(2);
-    const atsScore = Math.floor(Math.random() * (95 - 75) + 75);
 
-    console.log('Processing resume upload for:', req.file.originalname);
+    console.log(`Deterministic ATS Health Score for ${req.file.originalname}: ${atsResult.healthScore}/100`);
+
     const resume = await Resume.create({
         user: req.user._id,
         name: name || req.file.originalname,
-        fileName: req.file.filename || req.file.originalname,
+        fileName: req.file.originalname,
         size: `${sizeInMB} MB`,
-        atsScore: atsScore,
+        fileHash: atsResult.fileHash,
+        extractedText: parsedDoc.text,
+        atsScore: atsResult.overallScore,
+        healthScore: atsResult.healthScore,
+        matchScore: null,
+        healthBreakdown: atsResult.healthBreakdown,
+        matchBreakdown: {},
+        deductions: atsResult.deductions,
+        recognizedSkills: atsResult.recognizedSkills,
+        matchedKeywords: [],
+        missingKeywords: [],
+        bulletFixes: atsResult.bulletFixes,
+        formatAnomalies: parsedDoc.formatAnomalies,
+        scoreHistory: [{
+            date: new Date(),
+            score: atsResult.healthScore,
+            healthScore: atsResult.healthScore,
+            matchScore: null,
+            scoreType: 'Health',
+            targetRole: 'Initial ATS Health Screen'
+        }],
         status: 'Analyzed',
         resumeUrl: resumeUrl
-
-    }); // Closing Resume.create
+    });
 
     if (resume) {
         res.status(201).json(resume);
@@ -126,6 +158,116 @@ const uploadResume = asyncHandler(async (req, res) => {
         res.status(400);
         throw new Error('Invalid resume data');
     }
+});
+
+// @desc    Calculate deterministic ATS score against target job description
+// @route   POST /api/resumes/:id/score
+// @access  Private
+const scoreResumeAgainstJob = asyncHandler(async (req, res) => {
+    const resume = await Resume.findById(req.params.id);
+
+    if (!resume) {
+        res.status(404);
+        throw new Error('Resume not found');
+    }
+
+    if (resume.user.toString() !== req.user._id.toString()) {
+        res.status(401);
+        throw new Error('User not authorized');
+    }
+
+    const { jobDescription = '', targetRole = '' } = req.body;
+
+    const resumeText = resume.extractedText || resume.name || '';
+    const formatAnomalies = resume.formatAnomalies || [];
+    const wordCount = resumeText.split(/\s+/).filter(Boolean).length;
+    const pageCount = Math.max(1, Math.ceil(wordCount / 450));
+
+    const atsResult = analyzeResumeDeterministic(
+        resumeText,
+        jobDescription,
+        formatAnomalies,
+        wordCount,
+        pageCount
+    );
+
+    resume.targetRole = targetRole || resume.targetRole || '';
+    resume.targetJobDescription = jobDescription;
+    resume.healthScore = atsResult.healthScore;
+    resume.matchScore = atsResult.matchScore;
+    resume.atsScore = atsResult.overallScore;
+    resume.healthBreakdown = atsResult.healthBreakdown;
+    resume.matchBreakdown = atsResult.matchBreakdown || {};
+    resume.deductions = atsResult.deductions;
+    resume.matchedKeywords = atsResult.matchedKeywords;
+    resume.missingKeywords = atsResult.missingKeywords;
+    resume.recognizedSkills = atsResult.recognizedSkills;
+
+    if (atsResult.bulletFixes && atsResult.bulletFixes.length > 0) {
+        resume.bulletFixes = atsResult.bulletFixes;
+    }
+
+    // Append to score history
+    resume.scoreHistory.push({
+        date: new Date(),
+        score: atsResult.overallScore,
+        healthScore: atsResult.healthScore,
+        matchScore: atsResult.matchScore,
+        scoreType: atsResult.matchScore !== null ? 'Combined' : 'Health',
+        targetRole: targetRole || 'Target Role Match'
+    });
+
+    await resume.save();
+
+    res.json(resume);
+});
+
+// @desc    Update bullet fix suggestion status (accept / reject)
+// @route   PUT /api/resumes/:id/bullets/:index
+// @access  Private
+const updateBulletFixStatus = asyncHandler(async (req, res) => {
+    const resume = await Resume.findById(req.params.id);
+
+    if (!resume) {
+        res.status(404);
+        throw new Error('Resume not found');
+    }
+
+    if (resume.user.toString() !== req.user._id.toString()) {
+        res.status(401);
+        throw new Error('User not authorized');
+    }
+
+    const index = parseInt(req.params.index, 10);
+    const { status } = req.body; // 'accepted' | 'rejected'
+
+    if (resume.bulletFixes && resume.bulletFixes[index]) {
+        resume.bulletFixes[index].status = status;
+        await resume.save();
+        res.json({ message: `Suggestion ${status}`, bulletFixes: resume.bulletFixes });
+    } else {
+        res.status(400);
+        throw new Error('Bullet fix suggestion index not found');
+    }
+});
+
+// @desc    Get score history for resume
+// @route   GET /api/resumes/:id/history
+// @access  Private
+const getScoreHistory = asyncHandler(async (req, res) => {
+    const resume = await Resume.findById(req.params.id).select('scoreHistory name');
+
+    if (!resume) {
+        res.status(404);
+        throw new Error('Resume not found');
+    }
+
+    if (resume.user && resume.user.toString() !== req.user._id.toString()) {
+        res.status(401);
+        throw new Error('User not authorized');
+    }
+
+    res.json(resume.scoreHistory || []);
 });
 
 // @desc    Delete resume
@@ -158,14 +300,13 @@ const deleteResume = asyncHandler(async (req, res) => {
     }
 });
 
-// @desc    Download resume (Redirect to Cloudinary)
+// @desc    Download resume
 // @route   GET /api/resumes/:id/download
 // @access  Private
 const downloadResume = asyncHandler(async (req, res) => {
     const resume = await Resume.findById(req.params.id);
 
     if (resume && resume.resumeUrl) {
-        // Check authorization if strictly private
         if (resume.user.toString() !== req.user._id.toString()) {
             res.status(401);
             throw new Error('Not authorized');
@@ -180,6 +321,9 @@ const downloadResume = asyncHandler(async (req, res) => {
 module.exports = {
     getResumes,
     uploadResume,
+    scoreResumeAgainstJob,
+    updateBulletFixStatus,
+    getScoreHistory,
     deleteResume,
     downloadResume
 };

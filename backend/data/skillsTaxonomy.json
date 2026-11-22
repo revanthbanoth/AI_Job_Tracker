@@ -1,0 +1,87 @@
+{
+  "skills": [
+    { "canonical": "JavaScript", "category": "Languages", "aliases": ["javascript", "js", "ecmascript", "es6", "es2015", "vanilla js"] },
+    { "canonical": "TypeScript", "category": "Languages", "aliases": ["typescript", "ts"] },
+    { "canonical": "Python", "category": "Languages", "aliases": ["python", "python3", "py"] },
+    { "canonical": "Java", "category": "Languages", "aliases": ["java", "core java", "java 8", "java 11", "java 17"] },
+    { "canonical": "C++", "category": "Languages", "aliases": ["c++", "cpp", "c plus plus"] },
+    { "canonical": "C#", "category": "Languages", "aliases": ["c#", "csharp", "c sharp", ".net"] },
+    { "canonical": "Go", "category": "Languages", "aliases": ["go", "golang"] },
+    { "canonical": "Rust", "category": "Languages", "aliases": ["rust", "rustlang"] },
+    { "canonical": "Ruby", "category": "Languages", "aliases": ["ruby", "ruby on rails", "rails"] },
+    { "canonical": "PHP", "category": "Languages", "aliases": ["php", "php8", "laravel"] },
+    { "canonical": "Swift", "category": "Languages", "aliases": ["swift", "swiftui"] },
+    { "canonical": "Kotlin", "category": "Languages", "aliases": ["kotlin", "android kotlin"] },
+    { "canonical": "SQL", "category": "Languages", "aliases": ["sql", "structured query language", "relational sql"] },
+
+    { "canonical": "React", "category": "Frontend", "aliases": ["react", "react.js", "reactjs", "react-native", "react native"] },
+    { "canonical": "Vue", "category": "Frontend", "aliases": ["vue", "vue.js", "vuejs", "vue3", "nuxt"] },
+    { "canonical": "Angular", "category": "Frontend", "aliases": ["angular", "angularjs", "angular 2+"] },
+    { "canonical": "Next.js", "category": "Frontend", "aliases": ["next.js", "nextjs", "next js"] },
+    { "canonical": "Redux", "category": "Frontend", "aliases": ["redux", "redux toolkit", "rtk"] },
+    { "canonical": "Tailwind CSS", "category": "Frontend", "aliases": ["tailwind", "tailwindcss", "tailwind css"] },
+    { "canonical": "HTML5", "category": "Frontend", "aliases": ["html", "html5", "semantic html"] },
+    { "canonical": "CSS3", "category": "Frontend", "aliases": ["css", "css3", "sass", "scss", "less"] },
+    { "canonical": "Webpack", "category": "Frontend", "aliases": ["webpack", "vite", "bundlers", "rollup"] },
+
+    { "canonical": "Node.js", "category": "Backend", "aliases": ["node", "nodejs", "node.js"] },
+    { "canonical": "Express", "category": "Backend", "aliases": ["express", "express.js", "expressjs"] },
+    { "canonical": "Django", "category": "Backend", "aliases": ["django", "django rest framework", "drf"] },
+    { "canonical": "FastAPI", "category": "Backend", "aliases": ["fastapi", "fast api"] },
+    { "canonical": "Flask", "category": "Backend", "aliases": ["flask"] },
+    { "canonical": "Spring Boot", "category": "Backend", "aliases": ["spring", "spring boot", "springboot", "spring mvc"] },
+    { "canonical": "GraphQL", "category": "Backend", "aliases": ["graphql", "apollo", "gql"] },
+    { "canonical": "REST APIs", "category": "Backend", "aliases": ["rest", "rest api", "restful", "rest apis", "restful api", "api development"] },
+    { "canonical": "Microservices", "category": "Backend", "aliases": ["microservices", "microservice architecture", "distributed systems", "system design"] },
+    { "canonical": "gRPC", "category": "Backend", "aliases": ["grpc", "protobuf", "protocol buffers"] },
+
+    { "canonical": "PostgreSQL", "category": "Databases", "aliases": ["postgres", "postgresql", "psql"] },
+    { "canonical": "MySQL", "category": "Databases", "aliases": ["mysql", "mariadb"] },
+    { "canonical": "MongoDB", "category": "Databases", "aliases": ["mongo", "mongodb", "mongoose", "nosql"] },
+    { "canonical": "Redis", "category": "Databases", "aliases": ["redis", "in-memory cache", "caching"] },
+    { "canonical": "Elasticsearch", "category": "Databases", "aliases": ["elasticsearch", "elastic search", "elk"] },
+    { "canonical": "Cassandra", "category": "Databases", "aliases": ["cassandra", "apache cassandra"] },
+    { "canonical": "DynamoDB", "category": "Databases", "aliases": ["dynamodb", "aws dynamodb", "dynamo"] },
+
+    { "canonical": "Amazon Web Services", "category": "Cloud & DevOps", "aliases": ["aws", "amazon web services", "ec2", "s3", "lambda", "ecs", "eks", "cloudformation"] },
+    { "canonical": "Google Cloud Platform", "category": "Cloud & DevOps", "aliases": ["gcp", "google cloud", "google cloud platform", "bigquery"] },
+    { "canonical": "Microsoft Azure", "category": "Cloud & DevOps", "aliases": ["azure", "microsoft azure", "azure devops"] },
+    { "canonical": "Docker", "category": "Cloud & DevOps", "aliases": ["docker", "containerization", "containers"] },
+    { "canonical": "Kubernetes", "category": "Cloud & DevOps", "aliases": ["kubernetes", "k8s"] },
+    { "canonical": "CI/CD", "category": "Cloud & DevOps", "aliases": ["ci/cd", "ci cd", "continuous integration", "github actions", "gitlab ci", "jenkins", "circleci"] },
+    { "canonical": "Terraform", "category": "Cloud & DevOps", "aliases": ["terraform", "iac", "infrastructure as code"] },
+    { "canonical": "Linux", "category": "Cloud & DevOps", "aliases": ["linux", "unix", "bash", "shell scripting", "ubuntu"] },
+    { "canonical": "Git", "category": "Cloud & DevOps", "aliases": ["git", "github", "gitlab", "version control"] },
+
+    { "canonical": "Machine Learning", "category": "AI & Data", "aliases": ["machine learning", "ml", "deep learning", "artificial intelligence", "ai"] },
+    { "canonical": "PyTorch", "category": "AI & Data", "aliases": ["pytorch", "torch"] },
+    { "canonical": "TensorFlow", "category": "AI & Data", "aliases": ["tensorflow", "tf", "keras"] },
+    { "canonical": "Pandas", "category": "AI & Data", "aliases": ["pandas", "numpy", "data analysis", "scipy"] },
+    { "canonical": "Natural Language Processing", "category": "AI & Data", "aliases": ["nlp", "natural language processing", "llm", "large language models", "transformers"] },
+
+    { "canonical": "Automated Testing", "category": "Testing", "aliases": ["jest", "cypress", "playwright", "mocha", "selenium", "unit testing", "e2e testing", "integration testing", "tdd"] }
+  ],
+  "softSkills": [
+    "leadership", "cross-functional collaboration", "communication", "problem solving",
+    "mentorship", "agile", "scrum", "stakeholder management", "strategic planning", "project management"
+  ],
+  "buzzwords": [
+    "rockstar", "ninja", "guru", "wizard", "hard worker", "go-getter",
+    "team player", "synergy", "self-starter", "results-driven",
+    "think outside the box", "dynamic", "detail-oriented", "passionate individual"
+  ],
+  "actionVerbs": [
+    "architected", "spearheaded", "engineered", "developed", "orchestrated",
+    "designed", "implemented", "reduced", "increased", "optimized",
+    "accelerated", "scaled", "automated", "mentored", "delivered",
+    "streamlined", "revamped", "built", "launched", "executed",
+    "improved", "transformed", "established", "directed", "pioneered"
+  ],
+  "sectionSynonyms": {
+    "experience": ["experience", "work experience", "professional experience", "employment history", "work history", "career summary"],
+    "education": ["education", "academic background", "degrees", "university", "qualifications"],
+    "skills": ["skills", "technical skills", "technologies", "core competencies", "skillset", "tools & technologies"],
+    "summary": ["summary", "professional summary", "about me", "profile", "objective", "executive summary"],
+    "projects": ["projects", "personal projects", "key projects", "notable projects", "open source contributions"]
+  }
+}

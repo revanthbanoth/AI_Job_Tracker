@@ -4,8 +4,12 @@ import Modal from '../components/Modal';
 import HeadingUnderline from '../components/HeadingUnderline';
 import DoodleEmptyState from '../components/DoodleEmptyState';
 import Counter from '../components/Counter';
+import AtsScoreModal from '../components/AtsScoreModal';
 import { motion, useReducedMotion } from 'framer-motion';
-import { UploadCloud, FileText, Trash2, CheckCircle2, AlertCircle, ArrowUpRight } from 'lucide-react';
+import {
+    UploadCloud, FileText, Trash2, CheckCircle2, AlertCircle,
+    ArrowUpRight, Sparkles, ShieldCheck, Target, AlertTriangle
+} from 'lucide-react';
 
 const Resumes = () => {
     const shouldReduceMotion = useReducedMotion();
@@ -13,6 +17,7 @@ const Resumes = () => {
     const [selectedFile, setSelectedFile] = useState(null);
     const [resumes, setResumes] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [selectedResumeForInspect, setSelectedResumeForInspect] = useState(null);
     const fileInputRef = useRef(null);
 
     const [uploading, setUploading] = useState(false);
@@ -21,14 +26,29 @@ const Resumes = () => {
         const fetchResumes = async () => {
             setLoading(true);
             try {
-                const { data } = await api.get(`/api/resumes`).catch(e => ({ data: [] }));
+                const { data } = await api.get(`/api/resumes`).catch(() => ({ data: [] }));
                 const validData = Array.isArray(data) ? data : [];
 
                 const formattedResumes = validData.map(r => ({
                     id: r._id,
+                    _id: r._id,
                     name: r.name || 'Untitled Resume',
+                    fileName: r.fileName || r.name,
                     size: r.size || 'Unknown size',
                     atsScore: r.atsScore || 0,
+                    healthScore: r.healthScore ?? r.atsScore ?? 0,
+                    matchScore: r.matchScore ?? null,
+                    healthBreakdown: r.healthBreakdown || {},
+                    matchBreakdown: r.matchBreakdown || {},
+                    deductions: r.deductions || [],
+                    recognizedSkills: r.recognizedSkills || [],
+                    matchedKeywords: r.matchedKeywords || [],
+                    missingKeywords: r.missingKeywords || [],
+                    bulletFixes: r.bulletFixes || [],
+                    formatAnomalies: r.formatAnomalies || [],
+                    scoreHistory: r.scoreHistory || [],
+                    targetRole: r.targetRole || '',
+                    targetJobDescription: r.targetJobDescription || '',
                     uploadDate: r.createdAt ? new Date(r.createdAt).toLocaleDateString(undefined, {
                         month: 'short',
                         day: 'numeric',
@@ -95,14 +115,29 @@ const Resumes = () => {
 
             const newResume = {
                 id: data._id,
+                _id: data._id,
                 name: data.name,
+                fileName: data.fileName || data.name,
                 size: data.size,
+                atsScore: data.atsScore,
+                healthScore: data.healthScore ?? data.atsScore,
+                matchScore: data.matchScore ?? null,
+                healthBreakdown: data.healthBreakdown || {},
+                matchBreakdown: data.matchBreakdown || {},
+                deductions: data.deductions || [],
+                recognizedSkills: data.recognizedSkills || [],
+                matchedKeywords: data.matchedKeywords || [],
+                missingKeywords: data.missingKeywords || [],
+                bulletFixes: data.bulletFixes || [],
+                formatAnomalies: data.formatAnomalies || [],
+                scoreHistory: data.scoreHistory || [],
+                targetRole: data.targetRole || '',
+                targetJobDescription: data.targetJobDescription || '',
                 uploadDate: new Date(data.createdAt).toLocaleDateString(undefined, {
                     month: 'short',
                     day: 'numeric',
                     year: 'numeric'
                 }),
-                atsScore: data.atsScore,
                 status: data.status,
                 resumeUrl: data.resumeUrl
             };
@@ -110,6 +145,8 @@ const Resumes = () => {
             setResumes([newResume, ...resumes]);
             setIsUploadOpen(false);
             setSelectedFile(null);
+            // Open the deterministic inspector automatically for the new resume
+            setSelectedResumeForInspect(newResume);
         } catch (error) {
             console.error('Failed to upload resume', error);
             alert(error.response?.data?.message || 'Failed to upload resume');
@@ -122,7 +159,10 @@ const Resumes = () => {
         if (!window.confirm('Are you sure you want to delete this resume?')) return;
         try {
             await api.delete(`/api/resumes/${id}`);
-            setResumes(resumes.filter(r => r.id !== id));
+            setResumes(resumes.filter(r => r.id !== id && r._id !== id));
+            if (selectedResumeForInspect && (selectedResumeForInspect.id === id || selectedResumeForInspect._id === id)) {
+                setSelectedResumeForInspect(null);
+            }
         } catch (error) {
             console.error('Failed to delete resume', error);
         }
@@ -141,7 +181,7 @@ const Resumes = () => {
                 <div className="h-4 w-96 bg-card-subtle animate-pulse rounded-lg" />
                 <div className="space-y-4 pt-4">
                     {[1, 2, 3].map((i) => (
-                        <div key={i} className="h-24 bg-card border border-border rounded-card animate-pulse shadow-warm" />
+                        <div key={i} className="h-28 bg-card border border-border rounded-card animate-pulse shadow-warm" />
                     ))}
                 </div>
             </div>
@@ -159,11 +199,11 @@ const Resumes = () => {
             <motion.div variants={item} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-3xl font-serif font-bold text-text tracking-tight relative inline-block">
-                        Resumes & ATS Health
+                        Resumes & ATS Engine
                         <HeadingUnderline />
                     </h2>
                     <p className="text-muted mt-2 text-sm sm:text-base font-sans">
-                        Upload and tailor your resume versions. Track ATS parsability and match fidelity.
+                        Transparent, 100% deterministic ATS scoring. Every point deduction explained with actionable fixes.
                     </p>
                 </div>
                 <button
@@ -181,7 +221,7 @@ const Resumes = () => {
                     <DoodleEmptyState
                         type="resume"
                         title="No resumes uploaded yet"
-                        description="Upload your primary resume to get transparent ATS insights, bullet quality analysis, and job matching scores."
+                        description="Upload your primary resume (PDF or DOCX) to get transparent ATS insights, bullet quality analysis, and deterministic job matching scores."
                         actionLabel="Upload First Resume"
                         onAction={() => setIsUploadOpen(true)}
                     />
@@ -190,16 +230,19 @@ const Resumes = () => {
                 <motion.div variants={container} className="grid grid-cols-1 gap-4">
                     {resumes.map((resume) => {
                         const score = resume.atsScore;
+                        const healthScore = resume.healthScore ?? score;
+                        const matchScore = resume.matchScore;
+                        const hasWarnings = (resume.formatAnomalies || []).length > 0;
+
                         const scoreTone =
                             score === 0 ? { label: 'Pending Review', color: 'bg-card-subtle text-muted border-border' } :
-                            score >= 90 ? { label: 'Exceptional Fit', color: 'bg-sage/15 text-sage border-sage/30' } :
-                            score >= 80 ? { label: 'Strong Fit', color: 'bg-terracotta/15 text-terracotta border-terracotta/30' } :
-                            score >= 70 ? { label: 'Good Potential', color: 'bg-amber/15 text-amber border-amber/30' } :
-                            { label: 'Needs Polish', color: 'bg-stone-500/10 text-muted border-border' };
+                            score >= 85 ? { label: 'Exceptional ATS Health', color: 'bg-sage/15 text-sage border-sage/30' } :
+                            score >= 70 ? { label: 'Strong Fit', color: 'bg-amber/15 text-amber border-amber/30' } :
+                            { label: 'Needs Polish', color: 'bg-primary/15 text-primary border-primary/30' };
 
                         return (
                             <motion.div
-                                key={resume.id}
+                                key={resume.id || resume._id}
                                 variants={item}
                                 whileHover={{ y: -2 }}
                                 transition={{ type: 'spring', stiffness: 350, damping: 25 }}
@@ -209,11 +252,19 @@ const Resumes = () => {
                                     <div className="p-3 bg-terracotta/10 text-primary rounded-xl shrink-0 mt-0.5">
                                         <FileText size={24} />
                                     </div>
-                                    <div>
-                                        <h4 className="text-text font-serif font-semibold text-lg hover:text-primary transition-colors">
-                                            {resume.name}
-                                        </h4>
-                                        <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-muted mt-1.5">
+                                    <div className="space-y-1.5">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <h4 className="text-text font-serif font-semibold text-lg hover:text-primary transition-colors cursor-pointer" onClick={() => setSelectedResumeForInspect(resume)}>
+                                                {resume.name}
+                                            </h4>
+                                            {resume.fileHash && (
+                                                <span className="font-mono text-[10px] bg-card-subtle border border-border px-1.5 py-0.5 rounded text-muted" title={`SHA-256 Hash: ${resume.fileHash}`}>
+                                                    sha256:{resume.fileHash.slice(0, 8)}…
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <div className="flex flex-wrap items-center gap-2.5 text-xs sm:text-sm text-muted">
                                             <span className="font-mono">{resume.size}</span>
                                             <span>•</span>
                                             <span>Uploaded {resume.uploadDate}</span>
@@ -222,49 +273,93 @@ const Resumes = () => {
                                                 <CheckCircle2 size={12} />
                                                 {scoreTone.label}
                                             </span>
+
+                                            {hasWarnings && (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] font-medium bg-amber/15 text-amber-700 dark:text-amber-400 border-amber/30">
+                                                    <AlertTriangle size={11} />
+                                                    ATS Warning
+                                                </span>
+                                            )}
                                         </div>
+
+                                        {/* Recognized Skills Tag Preview */}
+                                        {Array.isArray(resume.recognizedSkills) && resume.recognizedSkills.length > 0 && (
+                                            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                                                <span className="text-[11px] text-muted font-medium">Recognized:</span>
+                                                {resume.recognizedSkills.slice(0, 5).map((skill, sIdx) => (
+                                                    <span key={sIdx} className="px-2 py-0.5 rounded-md bg-card-subtle border border-border text-[11px] text-text font-mono">
+                                                        {skill}
+                                                    </span>
+                                                ))}
+                                                {resume.recognizedSkills.length > 5 && (
+                                                    <span className="text-[11px] text-muted font-medium">
+                                                        +{resume.recognizedSkills.length - 5} more
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
                                 <div className="flex items-center justify-between md:justify-end gap-5 pt-3 md:pt-0 border-t md:border-t-0 border-border">
-                                    <div className="text-left md:text-right">
-                                        <div className="text-xs text-muted mb-0.5 font-medium">ATS Health Score</div>
+                                    <div className="text-left md:text-right cursor-pointer" onClick={() => setSelectedResumeForInspect(resume)}>
+                                        <div className="text-xs text-muted mb-0.5 font-medium flex items-center md:justify-end gap-1">
+                                            <span>Deterministic ATS Score</span>
+                                            <Info size={11} />
+                                        </div>
                                         <div className="flex items-baseline md:justify-end gap-1">
                                             <span className={`text-2xl font-serif font-bold ${
                                                 score === 0 ? 'text-muted' :
                                                 score >= 85 ? 'text-sage' :
                                                 score >= 70 ? 'text-amber' :
-                                                'text-muted'
+                                                'text-primary'
                                             }`}>
                                                 {score > 0 ? <Counter to={score} /> : '—'}
                                             </span>
                                             {score > 0 && <span className="text-xs text-muted">/100</span>}
                                         </div>
+                                        {matchScore !== null && (
+                                            <div className="text-[10px] text-sage font-medium">
+                                                Health: {healthScore} • Match: {matchScore}%
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="hidden md:block h-8 w-px bg-border" />
 
                                     <div className="flex items-center gap-2">
+                                        {/* Inspect ATS Breakdown Button */}
+                                        <button
+                                            onClick={() => setSelectedResumeForInspect(resume)}
+                                            className="px-3.5 py-2 bg-primary/10 hover:bg-primary text-primary hover:text-white rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-warm-sm"
+                                            title="View transparent point breakdown, deductions, and keyword match"
+                                        >
+                                            <Sparkles size={14} />
+                                            <span>Inspect ATS</span>
+                                        </button>
+
                                         {resume.resumeUrl ? (
                                             <a
                                                 href={resume.resumeUrl}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="px-3.5 py-2 bg-card-subtle hover:bg-terracotta/10 text-text hover:text-primary border border-border rounded-xl text-sm font-medium transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                                                className="px-3 py-2 bg-card-subtle hover:bg-card text-text border border-border rounded-xl text-xs font-medium transition-colors inline-flex items-center gap-1 cursor-pointer"
+                                                title="View original file"
                                             >
-                                                <span>View PDF</span>
-                                                <ArrowUpRight size={14} />
+                                                <span>File</span>
+                                                <ArrowUpRight size={13} />
                                             </a>
                                         ) : (
-                                            <span className="text-xs text-muted italic px-2">File unavailable</span>
+                                            <span className="text-xs text-muted italic px-2">Unavailable</span>
                                         )}
+
                                         <button
-                                            onClick={() => handleDelete(resume.id)}
+                                            onClick={() => handleDelete(resume.id || resume._id)}
                                             aria-label="Delete resume"
                                             title="Delete resume"
                                             className="p-2 text-muted hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-colors cursor-pointer"
                                         >
-                                            <Trash2 size={18} />
+                                            <Trash2 size={16} />
                                         </button>
                                     </div>
                                 </div>
@@ -291,23 +386,27 @@ const Resumes = () => {
                             <UploadCloud size={26} />
                         </div>
                         <p className="text-base font-medium text-text mb-1">
-                            {selectedFile ? selectedFile.name : 'Click to select or drag your PDF here'}
+                            {selectedFile ? selectedFile.name : 'Click to select or drag your resume here'}
                         </p>
                         <p className="text-xs text-muted font-sans">
-                            {selectedFile ? `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB PDF ready` : 'Supports PDF files up to 5MB'}
+                            {selectedFile
+                                ? `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB ready for parsing`
+                                : 'Supports PDF and DOCX files up to 5MB'}
                         </p>
                         <input
                             type="file"
                             ref={fileInputRef}
                             onChange={handleFileSelect}
                             className="hidden"
-                            accept=".pdf"
+                            accept=".pdf,.docx,.doc,.txt"
                         />
                     </div>
 
-                    <div className="bg-card-subtle p-3 rounded-xl border border-border text-xs text-muted flex items-start gap-2">
-                        <AlertCircle size={15} className="text-amber shrink-0 mt-0.5" />
-                        <span>Every version is preserved so you can link specific resumes to specific job applications.</span>
+                    <div className="bg-card-subtle p-3.5 rounded-xl border border-border text-xs text-muted flex items-start gap-2.5">
+                        <ShieldCheck size={16} className="text-primary shrink-0 mt-0.5" />
+                        <span>
+                            <strong>Deterministic ATS Engine:</strong> Text is extracted and parsed into standard sections, skills taxonomy, and bullet points. File hash caching ensures the exact same resume always gives the exact same score.
+                        </span>
                     </div>
 
                     <div className="flex justify-end gap-3 pt-2">
@@ -324,11 +423,22 @@ const Resumes = () => {
                             className="px-5 py-2.5 bg-primary hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-sm font-medium shadow-warm transition-all flex items-center gap-2 cursor-pointer"
                         >
                             {uploading && <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white" />}
-                            <span>{uploading ? 'Analyzing & Uploading...' : (selectedFile ? 'Upload & Parse' : 'Select File')}</span>
+                            <span>{uploading ? 'Parsing & Scoring...' : (selectedFile ? 'Upload & Parse Deterministically' : 'Select File')}</span>
                         </button>
                     </div>
                 </form>
             </Modal>
+
+            {/* ATS Score Inspector Modal */}
+            <AtsScoreModal
+                isOpen={Boolean(selectedResumeForInspect)}
+                onClose={() => setSelectedResumeForInspect(null)}
+                resume={selectedResumeForInspect}
+                onScoreUpdated={(updated) => {
+                    setResumes(prev => prev.map(r => (r.id === updated._id || r._id === updated._id) ? { ...r, ...updated, id: updated._id } : r));
+                    setSelectedResumeForInspect(prev => ({ ...prev, ...updated, id: updated._id }));
+                }}
+            />
         </motion.div>
     );
 };
