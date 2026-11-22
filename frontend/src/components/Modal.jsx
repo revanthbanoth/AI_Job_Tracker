@@ -30,18 +30,22 @@ const Modal = ({ isOpen, onClose, title, children }) => {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
+                    className="fixed inset-0 bg-black/40 dark:bg-black/70 backdrop-blur-xs z-[100] flex items-center justify-center p-4"
                 >
                     <motion.div
                         initial={{ scale: 0.95, opacity: 0, y: 10 }}
                         animate={{ scale: 1, opacity: 1, y: 0 }}
                         exit={{ scale: 0.95, opacity: 0, y: 10 }}
                         ref={modalRef}
-                        className="bg-card border border-border rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden relative max-h-[90vh] flex flex-col"
+                        className="bg-card border border-border rounded-card w-full max-w-lg shadow-warm-lg overflow-hidden relative max-h-[90vh] flex flex-col"
                     >
-                        <div className="flex items-center justify-between p-6 border-b border-border shrink-0">
-                            <h3 className="text-xl font-bold text-text">{title}</h3>
-                            <button onClick={onClose} className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors text-muted hover:text-text">
+                        <div className="flex items-center justify-between px-6 py-5 border-b border-border shrink-0 bg-card">
+                            <h3 className="text-xl font-serif font-bold text-text tracking-tight">{title}</h3>
+                            <button
+                                onClick={onClose}
+                                aria-label="Close dialog"
+                                className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors text-muted hover:text-text cursor-pointer"
+                            >
                                 <X size={20} />
                             </button>
                         </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Mail } from 'lucide-react';
+import HeadingUnderline from '../components/HeadingUnderline';
+import { ArrowLeft, Mail, CheckCircle2 } from 'lucide-react';
 
 const ForgotPassword = () => {
     const [email, setEmail] = useState('');
@@ -8,64 +9,78 @@ const ForgotPassword = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Since we don't have a real email service configured in this dev environment, 
-        // we will simulate the success state.
-        // In production, this would call an API: await axios.post('/api/auth/forgot-password', { email });
         setSubmitted(true);
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-background relative overflow-hidden">
-            {/* Background Gradient Blurs */}
-            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 rounded-full blur-[120px]" />
-            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-secondary/20 rounded-full blur-[120px]" />
+        <div className="w-full max-w-md p-8 bg-card border border-border rounded-card shadow-warm-lg relative">
+            <Link to="/login" className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-text mb-6 transition-colors group font-medium">
+                <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
+                Back to Sign in
+            </Link>
 
-            <div className="w-full max-w-md p-8 bg-card/50 rounded-lg shadow-xl border border-white/10 backdrop-blur-md relative z-10">
-                <Link to="/login" className="flex items-center gap-2 text-sm text-gray-400 hover:text-white mb-6 transition-colors group">
-                    <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-                    Back to Login
-                </Link>
-
-                {!submitted ? (
-                    <>
-                        <div className="text-center mb-8">
-                            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 text-primary">
-                                <Mail size={32} />
-                            </div>
-                            <h2 className="text-2xl font-bold text-white mb-2">Forgot Password?</h2>
-                            <p className="text-gray-400 text-sm">No worries, we'll send you reset instructions.</p>
+            {!submitted ? (
+                <>
+                    <div className="text-center mb-6">
+                        <div className="w-12 h-12 bg-amber/10 text-amber rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-warm">
+                            <Mail size={24} />
                         </div>
-
-                        <form onSubmit={handleSubmit} className="space-y-5">
-                            <div>
-                                <label className="block text-sm font-medium mb-1.5 text-gray-300">Email Address</label>
-                                <input
-                                    type="email"
-                                    required
-                                    className="w-full p-3 rounded-lg bg-background/50 border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all text-white placeholder-gray-500"
-                                    placeholder="Enter your email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                />
-                            </div>
-                            <button type="submit" className="w-full py-3 bg-gradient-to-r from-primary to-secondary hover:opacity-90 rounded-lg font-bold text-white shadow-lg shadow-primary/25 transition-all transform active:scale-[0.98]">
-                                Send Reset Link
-                            </button>
-                        </form>
-                    </>
-                ) : (
-                    <div className="text-center py-8">
-                        <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-green-500">
-                            <Mail size={32} />
+                        <div className="inline-block relative">
+                            <h2 className="text-2xl font-serif font-bold text-text tracking-tight">
+                                Reset Password
+                            </h2>
+                            <HeadingUnderline />
                         </div>
-                        <h2 className="text-2xl font-bold text-white mb-2">Check your email</h2>
-                        <p className="text-gray-400 mb-6">We sent a password reset link to<br /><span className="text-white font-medium">{email}</span></p>
-                        <p className="text-xs text-gray-500 mb-6">
-                            Did not receive the email? Check your spam filter,<br />or <button onClick={() => setSubmitted(false)} className="text-primary hover:underline">try another email address</button>.
+                        <p className="text-muted text-sm mt-2 font-sans">
+                            No worries, we'll send you simple recovery instructions.
                         </p>
                     </div>
-                )}
-            </div>
+
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div>
+                            <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5 font-sans">
+                                Registered Email Address
+                            </label>
+                            <input
+                                type="email"
+                                required
+                                className="w-full p-3 rounded-xl bg-background border border-border focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all text-text text-sm placeholder:text-muted/60"
+                                placeholder="you@example.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
+                        </div>
+                        <button
+                            type="submit"
+                            className="w-full py-3 bg-primary hover:bg-primary-hover text-white rounded-xl font-medium shadow-warm hover:shadow-warm-lg transition-all flex justify-center items-center gap-2 cursor-pointer pt-3 mt-2"
+                        >
+                            Send Reset Link
+                        </button>
+                    </form>
+                </>
+            ) : (
+                <div className="text-center py-4">
+                    <div className="w-14 h-14 bg-sage/15 text-sage rounded-full flex items-center justify-center mx-auto mb-4">
+                        <CheckCircle2 size={30} />
+                    </div>
+                    <h2 className="text-2xl font-serif font-bold text-text mb-2">Check your email</h2>
+                    <p className="text-muted text-sm mb-4">
+                        If an account exists for <span className="text-text font-semibold">{email}</span>, we've sent password reset instructions.
+                    </p>
+                    <p className="text-xs text-muted mb-6">
+                        Didn't see it? Check your spam folder, or{' '}
+                        <button onClick={() => setSubmitted(false)} className="text-primary hover:underline font-medium">
+                            try another email
+                        </button>.
+                    </p>
+                    <Link
+                        to="/login"
+                        className="inline-block px-5 py-2.5 bg-card-subtle hover:bg-card border border-border rounded-xl text-sm font-medium text-text transition-colors"
+                    >
+                        Return to Sign In
+                    </Link>
+                </div>
+            )}
         </div>
     );
 };

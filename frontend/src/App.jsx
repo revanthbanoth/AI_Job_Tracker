@@ -6,15 +6,26 @@ import Dashboard from './pages/Dashboard';
 import Applications from './pages/Applications';
 import Resumes from './pages/Resumes';
 import Settings from './pages/Settings';
+import Analytics from './pages/Analytics';
 import Layout from './components/Layout';
-// import { useAuth } from './context/AuthContext'; // Not needed directly here if using ProtectedRoute
 import ProtectedRoute from './components/ProtectedRoute';
+import Footer from './components/Footer';
+
+// Public page wrapper to include consistent footer without breaking viewport
+const PublicLayout = ({ children }) => (
+  <div className="min-h-screen w-full flex flex-col justify-between bg-background text-text overflow-y-auto">
+    <div className="flex-1 flex items-center justify-center">
+      {children}
+    </div>
+    <Footer />
+  </div>
+);
 
 function App() {
-  // Initialize theme
+  // Initialize theme: Light theme by default, dark mode if explicitly set
   if (typeof window !== 'undefined') {
     const theme = localStorage.getItem('theme');
-    if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
@@ -22,39 +33,34 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-text font-sans flex flex-col">
-      <div className="flex-grow">
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
+    <div className="h-screen w-full bg-background text-text font-sans overflow-hidden">
+      <Routes>
+        {/* Public Routes with consistent footer */}
+        <Route path="/login" element={<PublicLayout><Login /></PublicLayout>} />
+        <Route path="/register" element={<PublicLayout><Register /></PublicLayout>} />
+        <Route path="/forgot-password" element={<PublicLayout><ForgotPassword /></PublicLayout>} />
 
-          {/* Protected Routes */}
-          {/* Wrap all private routes with ProtectedRoute */}
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Layout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<Dashboard />} />
-            <Route path="applications" element={<Applications />} />
-            <Route path="resumes" element={<Resumes />} />
-            <Route path="settings" element={<Settings />} />
-          </Route>
+        {/* Protected Routes inside Layout */}
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Dashboard />} />
+          <Route path="applications" element={<Applications />} />
+          <Route path="analytics" element={<Analytics />} />
+          <Route path="resumes" element={<Resumes />} />
+          <Route path="settings" element={<Settings />} />
+        </Route>
 
-          {/* Catch all - Redirect to Login or Dashboard */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </div>
-      <footer className="py-2 text-center text-xs text-muted/50 border-t border-white/5">
-        Developed by B Revanth Kumar
-      </footer>
+        {/* Catch all - Redirect to Login or Dashboard */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { Moon, Sun, Save, UploadCloud } from 'lucide-react';
+import { Moon, Sun, Save, UploadCloud, CheckCircle2, AlertCircle, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import HeadingUnderline from '../components/HeadingUnderline';
 import api from '../services/api';
 
 const Settings = () => {
     const { user, setUser, loading } = useAuth();
-    const [isDarkMode, setIsDarkMode] = useState(true);
+    const [isDarkMode, setIsDarkMode] = useState(false);
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -14,7 +15,6 @@ const Settings = () => {
     const [error, setError] = useState('');
 
     // Resume state
-    const [resumeFile, setResumeFile] = useState(null);
     const [uploadingResume, setUploadingResume] = useState(false);
     const resumeInputRef = useRef(null);
 
@@ -26,20 +26,15 @@ const Settings = () => {
         }
     }, [user]);
 
-    if (loading) {
-        return <div className="p-8 text-center text-text">Loading settings...</div>;
-    }
-
     useEffect(() => {
-        // Initialize state based on current class
-        if (document.documentElement.classList.contains('dark')) {
-            setIsDarkMode(true);
-        } else {
-            setIsDarkMode(false);
-        }
+        const checkDark = () => {
+            setIsDarkMode(document.documentElement.classList.contains('dark'));
+        };
+        checkDark();
+
+        window.addEventListener('themechange', checkDark);
+        return () => window.removeEventListener('themechange', checkDark);
     }, []);
-
-
 
     const toggleTheme = () => {
         const newMode = !isDarkMode;
@@ -52,6 +47,8 @@ const Settings = () => {
             document.documentElement.classList.remove('dark');
             localStorage.setItem('theme', 'light');
         }
+
+        window.dispatchEvent(new Event('themechange'));
     };
 
     const handleUpdateProfile = async (e) => {
@@ -59,34 +56,28 @@ const Settings = () => {
         setError('');
         setMessage('');
 
-        if (password !== confirmPassword) {
+        if (password && password !== confirmPassword) {
             setError('Passwords do not match');
             return;
         }
 
         try {
-            // Config handled by interceptor for Authorization
-            // const config = { ... };
-
             const { data } = await api.put(`/api/auth/profile`, {
                 name,
                 email,
                 password: password || undefined
             });
 
-            // Update context
             const existingUserInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             const updatedUser = { ...user, name: data.name, email: data.email };
 
-            // Critical: Preserve token if it exists in the old userInfo but not in the new data
             if (existingUserInfo.token) {
                 updatedUser.token = existingUserInfo.token;
             }
 
             setUser(updatedUser);
-            localStorage.setItem('userInfo', JSON.stringify(updatedUser)); // Sync with local storage
+            localStorage.setItem('userInfo', JSON.stringify(updatedUser));
 
-            // Double check token key
             if (updatedUser.token) {
                 localStorage.setItem('token', updatedUser.token);
             }
@@ -108,18 +99,13 @@ const Settings = () => {
         setMessage('');
         setError('');
 
-        // Create FormData for file upload
         const formData = new FormData();
         formData.append('resume', file);
         formData.append('name', file.name);
 
         try {
-            // Header for multipart/form-data is set automatically by axios/browser when using FormData
-            // Authorization token is handled by global interceptor
             await api.post(`/api/resumes`, formData);
-
             setMessage(`Resume "${file.name}" uploaded successfully!`);
-            setResumeFile(null);
         } catch (err) {
             setError('Failed to upload resume to your profile');
         } finally {
@@ -127,17 +113,51 @@ const Settings = () => {
         }
     };
 
+    if (loading) {
+        return (
+            <div className="max-w-3xl space-y-4">
+                <div className="h-10 w-48 bg-card-subtle animate-pulse rounded-lg" />
+                <div className="h-32 bg-card border border-border rounded-card animate-pulse" />
+            </div>
+        );
+    }
+
     return (
-        <div className="max-w-3xl">
-            <h3 className="text-2xl font-bold text-text mb-6">Settings</h3>
+        <div className="max-w-3xl space-y-6">
+            <div>
+                <h2 className="text-3xl font-serif font-bold text-text tracking-tight relative inline-block">
+                    Account Settings
+                    <HeadingUnderline />
+                </h2>
+                <p className="text-muted mt-2 text-sm sm:text-base font-sans">
+                    Personalize your profile, security credentials, and workspace preferences.
+                </p>
+            </div>
 
-            {message && <div className="p-3 mb-4 rounded-lg bg-green-500/10 text-green-500 text-sm border border-green-500/20">{message}</div>}
-            {error && <div className="p-3 mb-4 rounded-lg bg-red-500/10 text-red-500 text-sm border border-red-500/20">{error}</div>}
+            {message && (
+                <div className="p-4 rounded-xl bg-sage/10 text-sage text-sm border border-sage/20 flex items-center gap-2">
+                    <CheckCircle2 size={16} className="shrink-0" />
+                    <span>{message}</span>
+                </div>
+            )}
+            {error && (
+                <div className="p-4 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 text-sm border border-red-500/20 flex items-center gap-2">
+                    <AlertCircle size={16} className="shrink-0" />
+                    <span>{error}</span>
+                </div>
+            )}
 
-            <form onSubmit={handleUpdateProfile} className="bg-card/30 border border-border rounded-2xl p-6 mb-6">
-                <div className="flex justify-between items-center mb-4">
-                    <h4 className="text-lg font-semibold text-text">Profile Settings</h4>
-                    <button type="submit" className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium transition-colors">
+            {/* Profile Form */}
+            <form onSubmit={handleUpdateProfile} className="bg-card border border-border rounded-card p-6 shadow-warm space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-border gap-2">
+                    <div>
+                        <h3 className="text-lg font-serif font-semibold text-text">Profile & Credentials</h3>
+                        <p className="text-xs text-muted">Your name is used for warm greetings across the dashboard.</p>
+                    </div>
+                    <button
+                        type="submit"
+                        className="self-start sm:self-auto flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-xl text-sm font-medium shadow-warm transition-all cursor-pointer"
+                    >
                         <Save size={16} />
                         Save Changes
                     </button>
@@ -145,42 +165,47 @@ const Settings = () => {
 
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium mb-1.5 text-muted">Display Name</label>
+                        <label className="block text-sm font-medium mb-1.5 text-text">Display Name</label>
                         <input
                             type="text"
-                            className="w-full p-3 rounded-lg bg-background/50 border border-border text-text focus:border-primary focus:outline-none transition-colors"
+                            className="w-full p-3 rounded-xl bg-background border border-border text-text focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors text-sm"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
+                            placeholder="Your full name"
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium mb-1.5 text-muted">Email</label>
+                        <label className="block text-sm font-medium mb-1.5 text-text">Email Address</label>
                         <input
                             type="email"
-                            className="w-full p-3 rounded-lg bg-background/50 border border-border text-muted"
+                            className="w-full p-3 rounded-xl bg-card-subtle border border-border text-muted cursor-not-allowed text-sm"
                             value={email}
                             disabled
                         />
-                        <p className="text-xs text-muted mt-1">Email cannot be changed.</p>
+                        <p className="text-xs text-muted mt-1.5">Registered email address is locked to preserve your application history.</p>
                     </div>
-                    <div className="pt-2 border-t border-border mt-4">
-                        <h5 className="text-sm font-medium text-text mb-3 mt-2">Change Password</h5>
+
+                    <div className="pt-4 border-t border-border">
+                        <div className="flex items-center gap-2 mb-3">
+                            <Shield size={16} className="text-primary" />
+                            <h4 className="text-sm font-medium text-text">Change Password</h4>
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-medium mb-1.5 text-muted">New Password</label>
+                                <label className="block text-xs font-medium mb-1 text-muted">New Password</label>
                                 <input
                                     type="password"
-                                    className="w-full p-3 rounded-lg bg-background/50 border border-border text-text focus:border-primary focus:outline-none transition-colors"
+                                    className="w-full p-3 rounded-xl bg-background border border-border text-text focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors text-sm"
                                     placeholder="Leave blank to keep current"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-medium mb-1.5 text-muted">Confirm Password</label>
+                                <label className="block text-xs font-medium mb-1 text-muted">Confirm New Password</label>
                                 <input
                                     type="password"
-                                    className="w-full p-3 rounded-lg bg-background/50 border border-border text-text focus:border-primary focus:outline-none transition-colors"
+                                    className="w-full p-3 rounded-xl bg-background border border-border text-text focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors text-sm"
                                     placeholder="Confirm new password"
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
@@ -191,12 +216,14 @@ const Settings = () => {
                 </div>
             </form>
 
-            <div className="bg-card/30 border border-border rounded-2xl p-6 mb-6">
-                <h4 className="text-lg font-semibold text-text mb-4">Resume Settings</h4>
-                <div className="flex items-center justify-between">
+            {/* Resume Upload Box */}
+            <div className="bg-card border border-border rounded-card p-6 shadow-warm">
+                <h3 className="text-lg font-serif font-semibold text-text mb-1">Quick Resume Upload</h3>
+                <p className="text-xs text-muted mb-4">Add a new resume version directly to your profile repository.</p>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-card-subtle border border-border">
                     <div>
-                        <p className="text-sm text-text font-medium mb-1">Add or Update Resume</p>
-                        <p className="text-xs text-muted">Upload a new resume to add it to your profile collection.</p>
+                        <p className="text-sm text-text font-medium">Add New PDF Document</p>
+                        <p className="text-xs text-muted">Automatically scanned and prepared for ATS scoring.</p>
                     </div>
                     <div>
                         <input
@@ -207,29 +234,41 @@ const Settings = () => {
                             accept=".pdf"
                         />
                         <button
-                            onClick={() => resumeInputRef.current.click()}
+                            onClick={() => resumeInputRef.current?.click()}
                             disabled={uploadingResume}
-                            className="flex items-center gap-2 px-4 py-2 bg-card hover:bg-black/5 dark:hover:bg-white/5 border border-border text-text rounded-lg text-sm font-medium transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 bg-card hover:bg-card-subtle border border-border text-text rounded-xl text-sm font-medium transition-colors shadow-sm cursor-pointer"
                         >
                             <UploadCloud size={16} />
-                            {uploadingResume ? 'Uploading...' : 'Upload Resume'}
+                            {uploadingResume ? 'Uploading...' : 'Select PDF'}
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div className="bg-card/30 border border-border rounded-2xl p-6">
-                <h4 className="text-lg font-semibold text-text mb-4">Appearance</h4>
-                <div className="flex items-center justify-between">
-                    <span className="text-muted flex items-center gap-2">
-                        {isDarkMode ? <Moon size={18} /> : <Sun size={18} />}
-                        {isDarkMode ? 'Dark Mode Active' : 'Light Mode Active'}
+            {/* Appearance Section */}
+            <div className="bg-card border border-border rounded-card p-6 shadow-warm">
+                <h3 className="text-lg font-serif font-semibold text-text mb-1">Appearance & Palette</h3>
+                <p className="text-xs text-muted mb-4">Select your preferred viewing comfort. Hand-crafted palette for clarity and ease of focus.</p>
+
+                <div className="flex items-center justify-between p-4 rounded-xl bg-card-subtle border border-border">
+                    <span className="text-text font-medium text-sm flex items-center gap-2">
+                        {isDarkMode ? <Moon size={18} className="text-primary" /> : <Sun size={18} className="text-amber" />}
+                        {isDarkMode ? 'Warm Charcoal Dark Mode' : 'Natural Light Cream Mode'}
                     </span>
                     <button
                         onClick={toggleTheme}
-                        className={`w-14 h-7 rounded-full relative transition-colors duration-300 focus:outline-none ${isDarkMode ? 'bg-primary' : 'bg-gray-600'}`}
+                        aria-label="Toggle dark mode"
+                        className={`w-14 h-8 rounded-full relative transition-colors duration-300 focus:outline-none cursor-pointer ${
+                            isDarkMode ? 'bg-primary' : 'bg-stone-300 dark:bg-stone-700'
+                        }`}
                     >
-                        <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-transform duration-300 shadow-md ${isDarkMode ? 'left-[calc(100%-24px)]' : 'left-1'}`}></div>
+                        <div
+                            className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-transform duration-300 shadow-warm flex items-center justify-center text-xs text-stone-700 ${
+                                isDarkMode ? 'left-[calc(100%-28px)]' : 'left-1'
+                            }`}
+                        >
+                            {isDarkMode ? '🌙' : '☀️'}
+                        </div>
                     </button>
                 </div>
             </div>

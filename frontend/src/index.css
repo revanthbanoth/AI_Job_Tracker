@@ -4,22 +4,69 @@
 
 @layer base {
   :root {
-    --color-background: 248 250 252;
-    --color-card: 255 255 255;
-    --color-text: 15 23 42;
-    --color-border: 226 232 240;
-    --color-muted: 100 116 139;
+    /* Human-made Warm Light Palette (Default) */
+    --color-background: 250 246 240; /* #FAF6F0 Cream */
+    --color-card: 255 255 255;       /* Pure warm surface */
+    --color-card-subtle: 245 239 230;/* #F5EFE6 Subtle warm tone */
+    --color-text: 31 27 22;          /* #1F1B16 Ink */
+    --color-border: 232 223 211;     /* #E8DFD3 Parchment border */
+    --color-muted: 107 99 91;        /* #6B635B Soft warm gray */
+    --color-primary: 212 102 58;     /* #D4663A Terracotta accent */
+    --color-primary-hover: 189 84 43;/* #BD542B Darker terracotta */
+    --color-secondary: 91 140 106;   /* #5B8C6A Sage green */
+    --color-success: 91 140 106;     /* #5B8C6A Sage green */
+    --color-warning: 224 142 69;     /* #E08E45 Warm amber */
+    --color-danger: 201 74 74;       /* #C94A4A Warm crimson */
   }
 
   .dark {
-    --color-background: 15 23 42;
-    --color-card: 30 41 59;
-    --color-text: 241 245 249;
-    --color-border: 51 65 85;
-    --color-muted: 148 163 184;
+    /* Warm Charcoal Dark Palette (Stone/Earth, not navy) */
+    --color-background: 28 25 23;    /* #1C1917 Warm Charcoal */
+    --color-card: 41 37 36;          /* #292524 Deep stone */
+    --color-card-subtle: 32 29 27;   /* #201D1B Slightly darker stone */
+    --color-text: 245 240 235;       /* #F5F0EB Soft bone text */
+    --color-border: 56 51 46;        /* #38332E Warm muted border */
+    --color-muted: 168 162 158;      /* #A8A29E Muted stone */
+    --color-primary: 224 122 80;     /* #E07A50 Soft glowing terracotta */
+    --color-primary-hover: 238 146 109;
+    --color-secondary: 110 163 127;  /* #6EA37F Sage green */
+    --color-success: 110 163 127;    /* #6EA37F */
+    --color-warning: 230 154 78;     /* #E69A4E Warm amber */
+    --color-danger: 224 102 102;     /* #E06666 Warm muted red */
   }
 
   body {
-    @apply bg-background text-text font-sans antialiased;
+    @apply bg-background text-text font-sans antialiased selection:bg-primary/20 selection:text-text;
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
   }
+
+  html, #root {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  h1, h2, h3, .font-editorial {
+    @apply font-serif tracking-tight;
+  }
+}
+
+/* Custom warm minimal scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(107, 99, 91, 0.2);
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 99, 91, 0.4);
 }

@@ -17,13 +17,40 @@ const applicationSchema = mongoose.Schema({
     status: {
         type: String,
         required: true,
-        enum: ['Applied', 'Interviewing', 'Offer', 'Rejected']
+        default: 'Applied'
     },
     jobUrl: {
         type: String
     },
     logo: {
         type: String // Initials or URL
+    },
+    location: {
+        type: String
+    },
+    salary: {
+        type: String
+    },
+    source: {
+        type: String
+    },
+    skills: [{
+        type: String
+    }],
+    contacts: [{
+        name: String,
+        role: String,
+        email: String,
+        phone: String
+    }],
+    statusTimeline: [{
+        status: { type: String, required: true },
+        date: { type: Date, default: Date.now },
+        notes: String
+    }],
+    resumeId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Resume'
     }
 }, {
     timestamps: true

@@ -1,76 +1,182 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useOutletContext, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
-import { motion } from 'framer-motion';
-import { Briefcase, Filter, Plus, Search, Sparkles, Trash2, ArrowRight } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { Briefcase, Filter, Plus, Search, Sparkles, Trash2, ArrowRight, X, Check, ChevronDown, Columns3, Table, LayoutGrid } from 'lucide-react';
 import Modal from '../components/Modal';
+import HeadingUnderline from '../components/HeadingUnderline';
+import DoodleEmptyState from '../components/DoodleEmptyState';
+import KanbanBoard from '../components/KanbanBoard';
+import ApplicationsTable from '../components/ApplicationsTable';
+import JobExtractorModal from '../components/JobExtractorModal';
+import ApplicationDetailModal from '../components/ApplicationDetailModal';
+import { triggerOfferConfetti } from '../utils/confetti';
 
-const StatusBadge = ({ status }) => {
+const StatusBadge = ({ status, onStatusChange }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
     const styles = {
-        'Applied': 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-        'Interviewing': 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-        'Offer': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-        'Rejected': 'bg-red-500/10 text-red-400 border-red-500/20',
+        'Wishlist': 'bg-stone-500/10 text-text border-stone-300 dark:border-stone-700',
+        'Applied': 'bg-primary/10 text-primary border-primary/25',
+        'Screening': 'bg-amber/15 text-amber border-amber/30',
+        'Interviewing': 'bg-amber-600/15 text-amber-600 dark:text-amber-400 border-amber-600/30',
+        'Offer': 'bg-sage/15 text-sage border-sage/35',
+        'Rejected': 'bg-card-subtle text-muted border-border',
     };
 
-    const style = styles[status] || 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+    const labels = {
+        'Wishlist': 'Wishlist',
+        'Applied': 'Applied',
+        'Screening': 'Screening',
+        'Interviewing': 'Interviewing',
+        'Offer': 'Offer Received 🎉',
+        'Rejected': 'Closed Chapter',
+    };
+
+    const statuses = ['Wishlist', 'Applied', 'Screening', 'Interviewing', 'Offer', 'Rejected'];
+    const normalizedStatus = status === 'Interview' ? 'Interviewing' : status;
+    const style = styles[normalizedStatus] || 'bg-card-subtle text-muted border-border';
+    const label = labels[normalizedStatus] || status;
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+                setIsOpen(false);
+            }
+        };
+        if (isOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isOpen]);
 
     return (
-        <span className={`px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold tracking-wider border ${style} inline-flex items-center gap-1.5 shadow-sm`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${status === 'Offer' ? 'bg-emerald-400 animate-pulse' : 'bg-current'}`}></span>
-            {status}
-        </span>
+        <div className="relative" ref={dropdownRef}>
+            <button
+                type="button"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    if (onStatusChange) setIsOpen(!isOpen);
+                }}
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${style} inline-flex items-center gap-1.5 shadow-sm transition-all cursor-pointer hover:opacity-90`}
+                title="Click to update application status"
+            >
+                <span className={`w-1.5 h-1.5 rounded-full ${status === 'Offer' ? 'bg-sage animate-pulse' : 'bg-current'}`}></span>
+                <span>{label}</span>
+                {onStatusChange && <ChevronDown size={12} className="opacity-60" />}
+            </button>
+
+            {isOpen && onStatusChange && (
+                <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute right-0 mt-1.5 w-40 bg-card border border-border rounded-xl shadow-warm-lg p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100"
+                >
+                    <div className="text-[10px] font-semibold text-muted uppercase tracking-wider px-2 py-1">Change Status</div>
+                    {statuses.map((s) => (
+                        <button
+                            key={s}
+                            type="button"
+                            onClick={() => {
+                                onStatusChange(s);
+                                setIsOpen(false);
+                            }}
+                            className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors text-left cursor-pointer ${
+                                normalizedStatus === s
+                                    ? 'bg-primary/10 text-primary font-semibold'
+                                    : 'text-text hover:bg-card-subtle'
+                            }`}
+                        >
+                            <span>{s === 'Rejected' ? 'Closed Chapter' : s === 'Offer' ? 'Offer Received 🎉' : s}</span>
+                            {normalizedStatus === s && <Check size={13} className="text-primary" />}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
     );
-}
+};
 
 const Applications = () => {
+    const [viewMode, setViewMode] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('apps_view_mode') || 'kanban';
+        }
+        return 'kanban';
+    });
+
     const [isAnalyzeModalOpen, setIsAnalyzeModalOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isExtractorOpen, setIsExtractorOpen] = useState(false);
+    const [selectedAppForDetail, setSelectedAppForDetail] = useState(null);
+
     const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
     const [selectedCompany, setSelectedCompany] = useState(null);
     const [selectedAppForAnalysis, setSelectedAppForAnalysis] = useState(null);
-    const [formDefaults, setFormDefaults] = useState({ company: '', position: '', jobUrl: '', logo: '' });
+    const [formDefaults, setFormDefaults] = useState({ company: '', position: '', jobUrl: '', logo: '', status: 'Applied' });
     const [selectedVacancy, setSelectedVacancy] = useState(null);
     const [applications, setApplications] = useState([]);
     const [resumes, setResumes] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    // Search & Filter State
+    const outletContext = useOutletContext();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const searchQuery = outletContext?.searchQuery ?? searchParams.get('search') ?? '';
+    const setSearchQuery = outletContext?.setSearchQuery || (() => {});
+    const [filterStatus, setFilterStatus] = useState('All');
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
+
     // Analysis State
     const [jobDescription, setJobDescription] = useState('');
     const [selectedResumeId, setSelectedResumeId] = useState('');
-    const [resumeText, setResumeText] = useState(''); // New state for editable text
+    const [resumeText, setResumeText] = useState('');
     const [analysisResult, setAnalysisResult] = useState(null);
     const [analyzing, setAnalyzing] = useState(false);
+
+    const handleViewModeChange = (mode) => {
+        setViewMode(mode);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('apps_view_mode', mode);
+        }
+    };
 
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                // Fetch Data in Parallel
                 const [appsRes, resumesRes] = await Promise.all([
-                    api.get(`/api/applications`).catch(e => ({ data: [] })),
-                    api.get(`/api/resumes`).catch(e => ({ data: [] }))
+                    api.get(`/api/applications`).catch(() => ({ data: [] })),
+                    api.get(`/api/resumes`).catch(() => ({ data: [] }))
                 ]);
 
-                // Validate and Format Applications
                 const appsData = Array.isArray(appsRes.data) ? appsRes.data : [];
                 const formattedApps = appsData.map(app => ({
                     id: app._id,
+                    _id: app._id,
                     company: app.company || 'Unknown',
                     position: app.position || 'Unknown',
                     status: app.status || 'Applied',
                     date: app.createdAt ? new Date(app.createdAt).toLocaleDateString() : 'Recent',
                     logo: app.logo || (app.company ? app.company.charAt(0).toUpperCase() : '?'),
-                    jobUrl: app.jobUrl
+                    jobUrl: app.jobUrl || '',
+                    location: app.location || '',
+                    salary: app.salary || '',
+                    source: app.source || 'Direct',
+                    notes: app.notes || '',
+                    skills: Array.isArray(app.skills) ? app.skills : [],
+                    contacts: Array.isArray(app.contacts) ? app.contacts : [],
+                    resumeId: app.resumeId,
+                    statusTimeline: Array.isArray(app.statusTimeline) ? app.statusTimeline : [],
+                    createdAt: app.createdAt,
+                    updatedAt: app.updatedAt
                 }));
                 setApplications(formattedApps);
 
-                // Validate and Format Resumes
                 const resumesData = Array.isArray(resumesRes.data) ? resumesRes.data : [];
                 setResumes(resumesData);
-
             } catch (error) {
                 console.error('Failed to fetch data', error);
-                // Fallback to empty arrays in case of critical failure
                 setApplications([]);
                 setResumes([]);
             } finally {
@@ -148,8 +254,13 @@ Education: Bachelor of Science in Computer Science.`);
         const applicationData = {
             company: formData.get('company'),
             position: formData.get('position'),
-            status: formData.get('status'),
+            status: formData.get('status') || 'Applied',
             jobUrl: formData.get('jobUrl') || '',
+            location: formData.get('location') || '',
+            salary: formData.get('salary') || '',
+            source: formData.get('source') || 'Direct',
+            notes: formData.get('notes') || '',
+            resumeId: formData.get('resumeId') || null,
             logo: formDefaults.logo || '' // Use logo if available
         };
 
@@ -158,19 +269,51 @@ Education: Bachelor of Science in Computer Science.`);
 
             const newApp = {
                 id: data._id,
+                _id: data._id,
                 company: data.company,
                 position: data.position,
                 status: data.status,
                 date: new Date(data.createdAt).toLocaleDateString(),
                 logo: data.logo || data.company.charAt(0).toUpperCase(),
-                jobUrl: data.jobUrl
+                jobUrl: data.jobUrl || '',
+                location: data.location || '',
+                salary: data.salary || '',
+                source: data.source || 'Direct',
+                notes: data.notes || '',
+                skills: data.skills || [],
+                contacts: data.contacts || [],
+                resumeId: data.resumeId,
+                statusTimeline: data.statusTimeline || [],
+                createdAt: data.createdAt,
+                updatedAt: data.updatedAt
             };
 
             setApplications(prev => [newApp, ...prev]);
             setIsModalOpen(false);
-            setFormDefaults({}); // Reset defaults
+            setFormDefaults({ company: '', position: '', jobUrl: '', logo: '', status: 'Applied' }); // Reset defaults
+
+            if (newApp.status === 'Offer') {
+                triggerOfferConfetti();
+            }
         } catch (error) {
             console.error('Failed to add application', error);
+        }
+    };
+
+    const handleStatusChange = async (id, newStatus) => {
+        try {
+            const { data } = await api.put(`/api/applications/${id}`, { status: newStatus });
+            setApplications(prev => prev.map(a => (a.id === id || a._id === id) ? {
+                ...a,
+                status: newStatus,
+                statusTimeline: data.statusTimeline || a.statusTimeline,
+                updatedAt: data.updatedAt || new Date().toISOString()
+            } : a));
+            if (newStatus === 'Offer') {
+                triggerOfferConfetti();
+            }
+        } catch (error) {
+            console.error('Failed to update status', error);
         }
     };
 
@@ -185,9 +328,16 @@ Education: Bachelor of Science in Computer Science.`);
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[400px] text-text">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-                <p className="text-xl font-medium">Loading your applications...</p>
+            <div className="max-w-7xl mx-auto space-y-6">
+                <div className="space-y-2">
+                    <div className="h-9 w-60 bg-card-subtle animate-pulse rounded-lg" />
+                    <div className="h-4 w-80 bg-card-subtle animate-pulse rounded-md" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 pt-4">
+                    {[1, 2, 3, 4, 5, 6].map(i => (
+                        <div key={i} className="h-44 bg-card border border-border rounded-card animate-pulse shadow-warm" />
+                    ))}
+                </div>
             </div>
         );
     }
@@ -308,6 +458,18 @@ Education: Bachelor of Science in Computer Science.`);
         show: { opacity: 1, y: 0 }
     };
 
+    const statuses = ['All', 'Applied', 'Interviewing', 'Offer', 'Rejected'];
+
+    const filteredApplications = applications.filter((app) => {
+        const q = searchQuery.toLowerCase().trim();
+        const matchesSearch = !q ||
+            app.company?.toLowerCase().includes(q) ||
+            app.position?.toLowerCase().includes(q) ||
+            app.status?.toLowerCase().includes(q);
+        const matchesStatus = filterStatus === 'All' || app.status === filterStatus;
+        return matchesSearch && matchesStatus;
+    });
+
     return (
         <motion.div
             variants={container}
@@ -318,69 +480,218 @@ Education: Bachelor of Science in Computer Science.`);
             {/* Header / Actions */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                 <div>
-                    <h2 className="text-3xl font-bold bg-gradient-to-r from-text to-muted bg-clip-text text-transparent">Applications</h2>
-                    <p className="text-muted mt-1">Manage and track your job applications efficiently.</p>
+                    <div className="relative inline-block">
+                        <h1 className="font-serif text-3xl sm:text-4xl font-bold text-text tracking-tight">Applications</h1>
+                        <HeadingUnderline className="text-primary max-w-[170px]" />
+                    </div>
+                    <p className="text-muted mt-2 text-base font-sans">Manage and track your job applications with clarity.</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2.5 relative">
+                    {/* View Mode Toggle */}
+                    <div className="bg-card border border-border rounded-xl p-1 flex items-center shadow-warm-sm">
+                        <button
+                            type="button"
+                            onClick={() => handleViewModeChange('kanban')}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                                viewMode === 'kanban'
+                                    ? 'bg-primary text-white shadow-sm'
+                                    : 'text-muted hover:text-text hover:bg-card-subtle'
+                            }`}
+                            title="Kanban Board View"
+                        >
+                            <Columns3 className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">Board</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => handleViewModeChange('table')}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                                viewMode === 'table'
+                                    ? 'bg-primary text-white shadow-sm'
+                                    : 'text-muted hover:text-text hover:bg-card-subtle'
+                            }`}
+                            title="Table View"
+                        >
+                            <Table className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">Table</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => handleViewModeChange('grid')}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                                viewMode === 'grid'
+                                    ? 'bg-primary text-white shadow-sm'
+                                    : 'text-muted hover:text-text hover:bg-card-subtle'
+                            }`}
+                            title="Cards Grid View"
+                        >
+                            <LayoutGrid className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">Cards</span>
+                        </button>
+                    </div>
+
+                    {/* Filter Button & Dropdown */}
+                    <div className="relative">
+                        <button
+                            className={`px-3.5 py-2 border rounded-xl transition-all flex items-center gap-2 text-xs sm:text-sm font-medium ${
+                                filterStatus !== 'All' || isFilterOpen
+                                    ? 'bg-primary/10 border-primary/40 text-primary'
+                                    : 'bg-card border-border text-text hover:bg-card-subtle'
+                            }`}
+                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                        >
+                            <Filter className="w-4 h-4" />
+                            <span>{filterStatus === 'All' ? 'Filter' : filterStatus}</span>
+                            {filterStatus !== 'All' && (
+                                <span className="w-2 h-2 rounded-full bg-primary"></span>
+                            )}
+                        </button>
+
+                        {isFilterOpen && (
+                            <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-warm p-1.5 z-50">
+                                <div className="text-[11px] font-semibold text-muted uppercase tracking-wider px-2 py-1">Filter by Status</div>
+                                {statuses.map((s) => (
+                                    <button
+                                        key={s}
+                                        onClick={() => {
+                                            setFilterStatus(s);
+                                            setIsFilterOpen(false);
+                                        }}
+                                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                                            filterStatus === s
+                                                ? 'bg-primary text-white font-semibold'
+                                                : 'text-text hover:bg-card-subtle'
+                                        }`}
+                                    >
+                                        <span>{s === 'Rejected' ? 'Closed Chapter' : s}</span>
+                                        {filterStatus === s && <Check className="w-3.5 h-3.5" />}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Add from Job Description Button */}
                     <button
-                        className="px-4 py-2 bg-card/50 border border-border text-text rounded-xl hover:bg-card hover:border-primary/30 transition-all flex items-center gap-2"
-                        onClick={() => {/* Filter logic later */ }}
+                        onClick={() => setIsExtractorOpen(true)}
+                        className="bg-amber/15 hover:bg-amber/25 text-amber-700 dark:text-amber-400 border border-amber/30 px-3.5 py-2 rounded-xl transition-all font-medium text-xs sm:text-sm shadow-warm-sm flex items-center gap-2 transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+                        title="Paste a job description or URL to extract details"
                     >
-                        <Filter className="w-4 h-4" />
-                        <span className="text-sm font-medium">Filter</span>
+                        <Sparkles className="w-4 h-4 text-amber" />
+                        <span className="hidden sm:inline">Add from JD</span>
                     </button>
+
+                    {/* Manual Add Application Button */}
                     <button
-                        onClick={() => setIsModalOpen(true)}
-                        className="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-xl transition-all font-medium shadow-lg shadow-primary/20 flex items-center gap-2 transform hover:scale-105"
+                        onClick={() => {
+                            setFormDefaults({ company: '', position: '', jobUrl: '', logo: '', status: 'Applied' });
+                            setIsModalOpen(true);
+                        }}
+                        className="bg-primary hover:bg-primary-hover text-white px-3.5 sm:px-4 py-2 rounded-xl transition-all font-medium text-xs sm:text-sm shadow-warm flex items-center gap-2 transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
                     >
-                        <Plus className="w-5 h-5" />
-                        Add Application
+                        <Plus className="w-4 h-4" />
+                        <span>Add Application</span>
                     </button>
                 </div>
             </div>
 
+            {/* Search / Filter Feedback Banner */}
+            {(searchQuery || filterStatus !== 'All') && (
+                <div className="flex items-center justify-between bg-card border border-border px-4 py-2.5 rounded-xl text-sm shadow-warm-sm">
+                    <span className="text-muted flex items-center gap-2 font-sans">
+                        <Search className="w-4 h-4 text-primary" />
+                        <span>
+                            Showing <strong className="text-text font-semibold">{filteredApplications.length}</strong> of {applications.length} applications
+                            {searchQuery && <> matching &ldquo;<span className="text-primary font-medium">{searchQuery}</span>&rdquo;</>}
+                            {filterStatus !== 'All' && <> with status <span className="font-semibold text-text">{filterStatus === 'Rejected' ? 'Closed Chapter' : filterStatus}</span></>}
+                        </span>
+                    </span>
+                    <button
+                        onClick={() => {
+                            setSearchQuery('');
+                            setFilterStatus('All');
+                        }}
+                        className="text-xs text-primary hover:underline font-semibold flex items-center gap-1"
+                    >
+                        <X className="w-3 h-3" /> Reset Filters
+                    </button>
+                </div>
+            )}
+
             {applications.length === 0 ? (
                 <motion.div
                     variants={item}
-                    className="text-center py-24 flex flex-col items-center justify-center bg-card/30 border border-dashed border-border rounded-3xl"
+                    className="bg-card border border-border rounded-card shadow-warm"
                 >
-                    <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-6">
-                        <Briefcase className="w-10 h-10 text-primary opacity-60" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-text mb-2">No applications yet</h3>
-                    <p className="text-muted mb-8 max-w-sm">Start tracking your journey by adding your first job application.</p>
-                    <button
-                        onClick={() => setIsModalOpen(true)}
-                        className="text-primary font-medium hover:text-primary/80 transition-colors flex items-center gap-2"
-                    >
-                        Add your first application <ArrowRight className="w-4 h-4" />
-                    </button>
+                    <DoodleEmptyState
+                        type="application"
+                        title="Nothing here yet"
+                        description="Add your first application, everyone starts at zero."
+                        actionLabel="Add First Application"
+                        actionIcon={<Plus className="w-4 h-4" />}
+                        onAction={() => {
+                            setFormDefaults({ company: '', position: '', jobUrl: '', logo: '', status: 'Applied' });
+                            setIsModalOpen(true);
+                        }}
+                    />
                 </motion.div>
+            ) : filteredApplications.length === 0 ? (
+                <motion.div
+                    variants={item}
+                    className="bg-card border border-border rounded-card shadow-warm"
+                >
+                    <DoodleEmptyState
+                        type="search"
+                        title="No matching applications"
+                        description="We couldn't find any opportunities matching your filters. Try clearing your search query."
+                        actionLabel="Reset Search & Filters"
+                        actionIcon={<X className="w-4 h-4" />}
+                        onAction={() => {
+                            setSearchQuery('');
+                            setFilterStatus('All');
+                        }}
+                    />
+                </motion.div>
+            ) : viewMode === 'kanban' ? (
+                <KanbanBoard
+                    applications={filteredApplications}
+                    onSelectApp={setSelectedAppForDetail}
+                    onStatusChange={handleStatusChange}
+                    onQuickAdd={(status) => {
+                        setFormDefaults({ company: '', position: '', jobUrl: '', logo: '', status: status || 'Applied' });
+                        setIsModalOpen(true);
+                    }}
+                    onAnalyzeApp={openAnalyzeModal}
+                />
+            ) : viewMode === 'table' ? (
+                <ApplicationsTable
+                    applications={filteredApplications}
+                    onSelectApp={setSelectedAppForDetail}
+                    onAnalyzeApp={openAnalyzeModal}
+                    onDeleteApp={handleDelete}
+                />
             ) : (
                 <motion.div
                     variants={container}
                     layout
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
                 >
-                    {/* Safe check for map */}
-                    {Array.isArray(applications) && applications.map((app) => (
+                    {filteredApplications.map((app) => (
                         <motion.div
-                            key={app.id}
+                            key={app.id || app._id}
                             layout
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
-                            transition={{ duration: 0.3 }}
-                            className="bg-card/40 backdrop-blur-sm border border-white/5 rounded-2xl p-6 hover:border-primary/20 hover:bg-card/60 transition-all group flex flex-col justify-between h-full relative overflow-hidden shadow-lg hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1"
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            whileHover={{ y: -3 }}
+                            transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                            onClick={() => setSelectedAppForDetail(app)}
+                            className="bg-card border border-border rounded-card p-5 hover:border-primary/40 hover:shadow-warm-lg transition-all duration-200 group flex flex-col justify-between h-full relative shadow-warm cursor-pointer"
                         >
-                            {/* Background Gradient */}
-                            <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/5 rounded-full blur-3xl transition-opacity opacity-0 group-hover:opacity-100 pointer-events-none" />
-
                             <div>
-                                <div className="flex justify-between items-start mb-5 relative z-10">
+                                <div className="flex justify-between items-start mb-4 gap-2">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 shadow-inner flex items-center justify-center text-xl font-bold border border-white/10 text-white overflow-hidden relative">
-                                            {/* Logic to show Image or Fallback Letter */}
+                                        <div className="w-11 h-11 rounded-xl bg-card-subtle border border-border flex items-center justify-center font-serif text-base font-bold text-text shadow-sm overflow-hidden relative">
                                             <img
                                                 src={app.logo && app.logo.length > 2 ? app.logo : `https://www.google.com/s2/favicons?domain=${app.company?.toLowerCase()}.com&sz=128`}
                                                 alt={app.company}
@@ -390,35 +701,37 @@ Education: Bachelor of Science in Computer Science.`);
                                                     e.target.parentElement.querySelector('span').style.display = 'block';
                                                 }}
                                             />
-                                            <span style={{ display: 'none' }} className="absolute inset-0 flex items-center justify-center">
+                                            <span style={{ display: 'none' }} className="absolute inset-0 flex items-center justify-center font-serif">
                                                 {app.company ? app.company.charAt(0).toUpperCase() : '?'}
                                             </span>
-                                            {/* Show span initially only if we suspect image might fail? No, easier to hide image on error. */
-                                                /* Actually, standard pattern: Image is visible. on error -> hide img, show span. 
-                                                   But to prevent a flash of empty box, we can put the span behind?
-                                                   Or just rely on the fact that if src is valid it loads.
-                                                   If app.logo is just a letter, the src logic above tries to fetch favicon.
-                                                */
-                                            }
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-text leading-tight group-hover:text-primary transition-colors">{app.company}</h4>
-                                            <span className="text-xs text-muted">{app.date}</span>
+                                            <h4 className="font-serif font-bold text-base text-text leading-tight group-hover:text-primary transition-colors">{app.company}</h4>
+                                            <span className="text-xs text-muted font-sans">{app.date}</span>
                                         </div>
                                     </div>
-                                    <StatusBadge status={app.status} />
+                                    <StatusBadge
+                                        status={app.status}
+                                        onStatusChange={(newStatus) => handleStatusChange(app.id || app._id, newStatus)}
+                                    />
                                 </div>
 
-                                <div className="mb-6 relative z-10">
-                                    <h5 className="text-sm font-medium text-muted uppercase tracking-wide mb-1">Position</h5>
-                                    <p className="text-text font-medium truncate" title={app.position}>{app.position}</p>
+                                <div className="mb-5">
+                                    <h5 className="text-xs font-semibold text-muted uppercase tracking-wider mb-1 font-sans">Role</h5>
+                                    <p className="text-text font-medium text-sm truncate" title={app.position}>{app.position}</p>
+                                    {app.location && (
+                                        <p className="text-xs text-muted mt-1 truncate">📍 {app.location}</p>
+                                    )}
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-3 relative z-10 pt-4 border-t border-white/5">
+                            <div className="flex items-center gap-3 relative z-10 pt-4 border-t border-border">
                                 <button
-                                    onClick={() => openAnalyzeModal(app)}
-                                    className="flex-1 py-2.5 bg-primary/10 hover:bg-primary text-primary hover:text-white rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 group/btn"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        openAnalyzeModal(app);
+                                    }}
+                                    className="flex-1 py-2.5 bg-primary/10 hover:bg-primary text-primary hover:text-white rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 group/btn cursor-pointer"
                                 >
                                     <Sparkles className="w-4 h-4" />
                                     <span>Analyze Match</span>
@@ -427,9 +740,9 @@ Education: Bachelor of Science in Computer Science.`);
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        handleDelete(app.id);
+                                        handleDelete(app.id || app._id);
                                     }}
-                                    className="p-2.5 text-muted hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all"
+                                    className="p-2.5 text-muted hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all cursor-pointer"
                                     title="Delete Application"
                                 >
                                     <Trash2 className="w-4 h-4" />
@@ -653,12 +966,12 @@ Education: Bachelor of Science in Computer Science.`);
                 )}
             </Modal>
 
-            <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setFormDefaults({}); }} title="Track New Application">
+            <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setFormDefaults({ company: '', position: '', jobUrl: '', logo: '', status: 'Applied' }); }} title="Track New Application">
                 <form onSubmit={handleAddApplication} className="space-y-4">
                     {/* Show Logo If Available */}
                     {formDefaults.logo && (
                         <div className="flex justify-center mb-4">
-                            <div className="w-16 h-16 rounded-xl bg-background border border-border flex items-center justify-center p-2">
+                            <div className="w-16 h-16 rounded-xl bg-card-subtle border border-border flex items-center justify-center p-2">
                                 <img
                                     src={formDefaults.logo}
                                     alt="Company Logo"
@@ -669,53 +982,205 @@ Education: Bachelor of Science in Computer Science.`);
                         </div>
                     )}
 
-                    <div>
-                        <label className="block text-sm font-medium mb-1.5 text-muted">Company Name</label>
-                        <input
-                            name="company"
-                            type="text"
-                            defaultValue={formDefaults.company || ''}
-                            placeholder="e.g. Google"
-                            className="w-full p-3 rounded-lg bg-background/50 border border-border text-text focus:border-primary focus:outline-none"
-                            required
-                        />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5 text-muted">Company Name *</label>
+                            <input
+                                name="company"
+                                type="text"
+                                defaultValue={formDefaults.company || ''}
+                                placeholder="e.g. Google, Stripe"
+                                className="w-full px-3.5 py-2.5 rounded-xl bg-card-subtle border border-border text-text focus:border-primary focus:outline-none text-sm"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5 text-muted">Position / Role *</label>
+                            <input
+                                name="position"
+                                type="text"
+                                defaultValue={formDefaults.position || ''}
+                                placeholder="e.g. Senior Frontend Engineer"
+                                className="w-full px-3.5 py-2.5 rounded-xl bg-card-subtle border border-border text-text focus:border-primary focus:outline-none text-sm"
+                                required
+                            />
+                        </div>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1.5 text-muted">Position</label>
-                        <input
-                            name="position"
-                            type="text"
-                            defaultValue={formDefaults.position || ''}
-                            placeholder="e.g. Frontend Engineer"
-                            className="w-full p-3 rounded-lg bg-background/50 border border-border text-text focus:border-primary focus:outline-none"
-                            required
-                        />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5 text-muted">Location</label>
+                            <input
+                                name="location"
+                                type="text"
+                                defaultValue={formDefaults.location || ''}
+                                placeholder="e.g. Remote, San Francisco, CA"
+                                className="w-full px-3.5 py-2.5 rounded-xl bg-card-subtle border border-border text-text focus:border-primary focus:outline-none text-sm"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5 text-muted">Salary Range</label>
+                            <input
+                                name="salary"
+                                type="text"
+                                defaultValue={formDefaults.salary || ''}
+                                placeholder="e.g. $130,000 - $150,000"
+                                className="w-full px-3.5 py-2.5 rounded-xl bg-card-subtle border border-border text-text focus:border-primary focus:outline-none text-sm"
+                            />
+                        </div>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1.5 text-muted">Job URL</label>
-                        <input
-                            name="jobUrl"
-                            type="url"
-                            defaultValue={formDefaults.jobUrl || ''}
-                            placeholder="https://..."
-                            className="w-full p-3 rounded-lg bg-background/50 border border-border text-text focus:border-primary focus:outline-none"
-                        />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5 text-muted">Application Stage</label>
+                            <select
+                                name="status"
+                                defaultValue={formDefaults.status || 'Applied'}
+                                className="w-full px-3.5 py-2.5 rounded-xl bg-card-subtle border border-border text-text focus:border-primary focus:outline-none text-sm"
+                            >
+                                <option value="Wishlist">Wishlist</option>
+                                <option value="Applied">Applied</option>
+                                <option value="Screening">Screening</option>
+                                <option value="Interviewing">Interviewing</option>
+                                <option value="Offer">Offer 🎉</option>
+                                <option value="Rejected">Closed Chapter</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5 text-muted">Source</label>
+                            <select
+                                name="source"
+                                defaultValue="Direct"
+                                className="w-full px-3.5 py-2.5 rounded-xl bg-card-subtle border border-border text-text focus:border-primary focus:outline-none text-sm"
+                            >
+                                <option value="Direct">Direct / Company Careers</option>
+                                <option value="LinkedIn">LinkedIn</option>
+                                <option value="Indeed">Indeed</option>
+                                <option value="Referral">Personal Referral</option>
+                                <option value="Recruiter">Recruiter Outreach</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1.5 text-muted">Status</label>
-                        <select name="status" className="w-full p-3 rounded-lg bg-background/50 border border-border text-text focus:border-primary focus:outline-none">
-                            <option value="Applied">Applied</option>
-                            <option value="Interviewing">Interviewing</option>
-                            <option value="Offer">Offer</option>
-                            <option value="Rejected">Rejected</option>
-                        </select>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5 text-muted">Linked Resume Version</label>
+                            <select
+                                name="resumeId"
+                                className="w-full px-3.5 py-2.5 rounded-xl bg-card-subtle border border-border text-text focus:border-primary focus:outline-none text-sm"
+                            >
+                                <option value="">-- No Linked Resume --</option>
+                                {resumes.map(r => (
+                                    <option key={r._id} value={r._id}>{r.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5 text-muted">Job Posting URL</label>
+                            <input
+                                name="jobUrl"
+                                type="url"
+                                defaultValue={formDefaults.jobUrl || ''}
+                                placeholder="https://..."
+                                className="w-full px-3.5 py-2.5 rounded-xl bg-card-subtle border border-border text-text focus:border-primary focus:outline-none text-sm"
+                            />
+                        </div>
                     </div>
-                    <div className="pt-4 flex justify-end gap-3">
-                        <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-muted hover:text-text transition-colors">Cancel</button>
-                        <button type="submit" className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg">Save Application</button>
+
+                    <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5 text-muted">Notes / Strategy</label>
+                        <textarea
+                            name="notes"
+                            rows="2"
+                            placeholder="Add interview notes, recruiter details, key discussion topics..."
+                            className="w-full px-3.5 py-2 rounded-xl bg-card-subtle border border-border text-text focus:border-primary focus:outline-none text-sm resize-none"
+                        ></textarea>
+                    </div>
+
+                    <div className="pt-3 flex justify-end gap-3 border-t border-border">
+                        <button
+                            type="button"
+                            onClick={() => setIsModalOpen(false)}
+                            className="px-4 py-2.5 text-muted hover:text-text rounded-xl font-medium text-sm transition-colors cursor-pointer"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            className="px-5 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl font-medium text-sm transition-all shadow-warm cursor-pointer"
+                        >
+                            Save Application
+                        </button>
                     </div>
                 </form>
             </Modal>
+
+            {/* Job Extractor Modal */}
+            <JobExtractorModal
+                isOpen={isExtractorOpen}
+                onClose={() => setIsExtractorOpen(false)}
+                resumes={resumes}
+                onApplicationCreated={(newApp) => {
+                    const formatted = {
+                        id: newApp._id,
+                        _id: newApp._id,
+                        company: newApp.company,
+                        position: newApp.position,
+                        status: newApp.status,
+                        date: new Date(newApp.createdAt).toLocaleDateString(),
+                        logo: newApp.logo || newApp.company?.charAt(0).toUpperCase(),
+                        jobUrl: newApp.jobUrl || '',
+                        location: newApp.location || '',
+                        salary: newApp.salary || '',
+                        source: newApp.source || 'Direct',
+                        notes: newApp.notes || '',
+                        skills: newApp.skills || [],
+                        contacts: newApp.contacts || [],
+                        resumeId: newApp.resumeId,
+                        statusTimeline: newApp.statusTimeline || [],
+                        createdAt: newApp.createdAt,
+                        updatedAt: newApp.updatedAt
+                    };
+                    setApplications(prev => [formatted, ...prev]);
+                }}
+            />
+
+            {/* Application Detail Modal (Overview, Contacts, Timeline) */}
+            <ApplicationDetailModal
+                isOpen={Boolean(selectedAppForDetail)}
+                onClose={() => setSelectedAppForDetail(null)}
+                application={selectedAppForDetail}
+                resumes={resumes}
+                onUpdated={(updated) => {
+                    const formatted = {
+                        id: updated._id || updated.id,
+                        _id: updated._id || updated.id,
+                        company: updated.company,
+                        position: updated.position,
+                        status: updated.status,
+                        date: new Date(updated.createdAt).toLocaleDateString(),
+                        logo: updated.logo || updated.company?.charAt(0).toUpperCase(),
+                        jobUrl: updated.jobUrl || '',
+                        location: updated.location || '',
+                        salary: updated.salary || '',
+                        source: updated.source || 'Direct',
+                        notes: updated.notes || '',
+                        skills: updated.skills || [],
+                        contacts: updated.contacts || [],
+                        resumeId: updated.resumeId,
+                        statusTimeline: updated.statusTimeline || [],
+                        createdAt: updated.createdAt,
+                        updatedAt: updated.updatedAt
+                    };
+                    setApplications(prev => prev.map(a => (a.id === formatted.id || a._id === formatted.id) ? formatted : a));
+                    setSelectedAppForDetail(null);
+                }}
+                onDeleted={(deletedId) => {
+                    handleDelete(deletedId);
+                    setSelectedAppForDetail(null);
+                }}
+            />
 
             {/* Analysis Modal */}
             <Modal isOpen={isAnalyzeModalOpen} onClose={() => setIsAnalyzeModalOpen(false)} title="Resume Match Analysis">
