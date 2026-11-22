@@ -12,9 +12,11 @@ const {
     updateEmailPreferences,
     unsubscribeUser,
     deleteAccount,
+    testEmailDelivery,
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 
+router.get('/test-email', testEmailDelivery);
 router.post('/register', registerUser);
 router.post('/login', authUser);
 router.post('/logout', logoutUser);

@@ -250,7 +250,7 @@ const Layout = () => {
                 </header>
 
                 {/* Main Content: Single Scroll Container with Solid Warm Surface */}
-                <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 md:p-8 pb-24 md:pb-8 z-0 flex flex-col justify-between custom-scrollbar bg-background transition-colors duration-300">
+                <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 md:p-8 pb-32 md:pb-8 z-0 flex flex-col justify-between custom-scrollbar bg-background transition-colors duration-300">
                     <div className="flex-1 pb-8">
                         <Outlet context={{ searchQuery, setSearchQuery }} />
                     </div>
@@ -258,7 +258,7 @@ const Layout = () => {
                 </main>
 
                 {/* Mobile Bottom Navigation Bar (Screens < md) */}
-                <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-md border-t border-border flex items-center justify-around py-2 px-1 shadow-warm-lg select-none">
+                <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-md border-t border-border flex items-center justify-around pt-2 pb-5 sm:pb-3 px-1 shadow-[0_-4px_16px_rgba(0,0,0,0.1)] select-none">
                     <MobileNavItem to="/" icon={<LayoutDashboard size={19} />} label="Home" active={location.pathname === '/'} />
                     <MobileNavItem to="/applications" icon={<Briefcase size={19} />} label="Jobs" active={location.pathname === '/applications'} />
                     <MobileNavItem to="/calendar" icon={<Calendar size={19} />} label="Calendar" active={location.pathname === '/calendar'} />
@@ -365,14 +365,18 @@ const NavItem = ({ to, icon, label, active }) => (
 const MobileNavItem = ({ to, icon, label, active }) => (
     <Link
         to={to}
-        className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all duration-150 ${
-            active ? 'text-primary font-bold' : 'text-muted hover:text-text'
+        className={`flex flex-col items-center justify-center py-1 px-1 sm:px-2 rounded-xl transition-all duration-150 min-w-[50px] ${
+            active ? 'text-primary' : 'text-text/75 hover:text-text'
         }`}
     >
-        <div className={`p-1 rounded-lg ${active ? 'bg-primary/10' : ''}`}>
+        <div className={`p-1 rounded-lg transition-colors ${active ? 'bg-primary/15 text-primary' : 'text-text/80'}`}>
             {icon}
         </div>
-        <span className="text-[10px] mt-0.5 tracking-tight font-medium">{label}</span>
+        <span className={`text-[11px] leading-tight mt-0.5 tracking-tight whitespace-nowrap ${
+            active ? 'font-bold text-primary' : 'font-medium text-text/80'
+        }`}>
+            {label}
+        </span>
     </Link>
 );
 

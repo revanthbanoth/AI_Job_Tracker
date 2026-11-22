@@ -410,6 +410,57 @@ const deleteAccount = asyncHandler(async (req, res) => {
     });
 });
 
+// @desc    Test real email delivery and diagnose SMTP configuration
+// @route   GET /api/auth/test-email
+// @access  Public
+const testEmailDelivery = asyncHandler(async (req, res) => {
+    const sendEmail = require('../utils/sendEmail');
+    const to = req.query.to || process.env.EMAIL_USER;
+    const hasUser = Boolean(process.env.EMAIL_USER);
+    const hasPass = Boolean(process.env.EMAIL_PASS);
+
+    if (!hasUser || !hasPass) {
+        return res.status(400).json({
+            success: false,
+            error: 'Missing email credentials. Set EMAIL_USER and EMAIL_PASS in Render environment variables.',
+            config: {
+                hasEmailUser: hasUser,
+                hasEmailPass: hasPass,
+                service: process.env.EMAIL_SERVICE || 'gmail'
+            }
+        });
+    }
+
+    try {
+        const result = await sendEmail({
+            to,
+            subject: 'AI Job Tracker - Live Email Verification',
+            text: `Hello! This is a test email confirming that your JobTracker email service is properly configured and actively delivering real emails from Render.\n\nSent at: ${new Date().toISOString()}`,
+            html: `<div style="font-family: Arial, sans-serif; padding: 20px; background: #FAF6F0; border-radius: 8px;">
+                <h2 style="color: #1F1B16; font-family: Georgia, serif;">JobTracker Email Delivery Active</h2>
+                <p style="color: #1F1B16; font-size: 14px;">This email confirms that your live Gmail SMTP credentials are functioning correctly on Render.</p>
+                <p style="color: #8C827A; font-size: 12px;">Sent at: ${new Date().toISOString()}</p>
+            </div>`
+        });
+
+        res.status(200).json({
+            success: true,
+            message: `Verification email sent successfully to ${to}`,
+            details: result
+        });
+    } catch (err) {
+        console.error('[testEmailDelivery] Error:', err);
+        res.status(500).json({
+            success: false,
+            error: err.message,
+            code: err.code || 'UNKNOWN_ERROR',
+            tip: err.message.includes('Username and Password not accepted') 
+                ? 'Check that your 16-character Gmail App Password in Render does not have extra spaces or typos.' 
+                : 'Check network access and SMTP credentials in Render.'
+        });
+    }
+});
+
 module.exports = {
     authUser,
     registerUser,
@@ -422,4 +473,5 @@ module.exports = {
     updateEmailPreferences,
     unsubscribeUser,
     deleteAccount,
+    testEmailDelivery,
 };
