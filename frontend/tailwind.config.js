@@ -8,8 +8,9 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                serif: ['Fraunces', 'Georgia', 'serif'],
-                sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                sans: ['Montserrat', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                serif: ['Montserrat', 'sans-serif'],
+                montserrat: ['Montserrat', 'sans-serif'],
             },
             borderRadius: {
                 'card': '16px',

@@ -35,8 +35,13 @@
     --color-danger: 224 102 102;     /* #E06666 Warm muted red */
   }
 
+  * {
+    font-family: 'Montserrat', sans-serif;
+  }
+
   body {
-    @apply bg-background text-text font-sans antialiased selection:bg-primary/20 selection:text-text;
+    @apply bg-background text-text antialiased selection:bg-primary/20 selection:text-text;
+    font-family: 'Montserrat', sans-serif;
     height: 100%;
     width: 100%;
     margin: 0;
@@ -48,10 +53,12 @@
     height: 100%;
     width: 100%;
     overflow: hidden;
+    font-family: 'Montserrat', sans-serif;
   }
 
-  h1, h2, h3, .font-editorial {
-    @apply font-serif tracking-tight;
+  h1, h2, h3, h4, h5, h6, .font-editorial, .font-serif, .font-sans {
+    font-family: 'Montserrat', sans-serif !important;
+    @apply tracking-tight;
   }
 }
 
