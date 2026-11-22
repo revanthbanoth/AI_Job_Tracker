@@ -51,6 +51,15 @@ app.use(cors({
     credentials: true,
 }));
 
+// Lightweight health-check endpoint for instant wake-up & uptime monitoring
+app.get('/api/health', (req, res) => {
+    res.status(200).json({
+        status: 'ok',
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString()
+    });
+});
+
 // Serve static files from frontend/dist
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
@@ -64,7 +73,11 @@ app.use('/api/analysis', require('./routes/analysisRoutes'));
 app.use('/api/ai', require('./routes/aiCopilotRoutes'));
 app.use('/api/share', require('./routes/shareRoutes'));
 
-app.use((req, res) => {
+// For non-API routes, serve frontend index.html SPA
+app.use((req, res, next) => {
+    if (req.path.startsWith('/api')) {
+        return next();
+    }
     res.sendFile(
         path.join(__dirname, "../frontend/dist/index.html")
     );
@@ -73,6 +86,7 @@ app.use((req, res) => {
 app.use(notFound);
 app.use(errorHandler);
 
+const axios = require('axios');
 const emailScheduler = require('./services/emailScheduler');
 
 const PORT = process.env.PORT || 5000;
@@ -81,4 +95,16 @@ app.listen(PORT, () => {
     console.log(`Server started on port ${PORT}`);
     console.log(`AI Service URL: ${process.env.AI_SERVICE_URL || 'Not Set (using localhost)'}`);
     emailScheduler.start(30);
+
+    // Keep-Alive Heartbeat for Render Free Tier (pings every 14 minutes)
+    const backendUrl = process.env.RENDER_EXTERNAL_URL || process.env.BACKEND_URL;
+    if (backendUrl) {
+        const keepAliveMinutes = 14;
+        setInterval(() => {
+            axios.get(`${backendUrl}/api/health`)
+                .then(() => console.log(`[KeepAlive] Heartbeat pinged ${backendUrl}/api/health successfully`))
+                .catch(err => console.log(`[KeepAlive] Heartbeat ping notice: ${err.message}`));
+        }, keepAliveMinutes * 60 * 1000);
+        console.log(`[KeepAlive] Active for ${backendUrl} every ${keepAliveMinutes}m`);
+    }
 });

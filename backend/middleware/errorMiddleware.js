@@ -6,11 +6,17 @@ const notFound = (req, res, next) => {
 
 const errorHandler = (err, req, res, next) => {
     let statusCode = res.statusCode === 200 ? 500 : res.statusCode;
-    let message = err.message;
+    let message = typeof err === 'string' ? err : (err.message || 'Server Error');
 
     if (err.name === 'CastError' && err.kind === 'ObjectId') {
         statusCode = 404;
         message = 'Resource not found';
+    }
+
+    // Handle Multer specific errors (e.g. file too large or invalid type)
+    if (err.name === 'MulterError' || err.code === 'LIMIT_FILE_SIZE') {
+        statusCode = 400;
+        message = 'The uploaded file is too large. Maximum allowed size is 10MB.';
     }
 
     res.status(statusCode).json({

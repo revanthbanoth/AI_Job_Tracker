@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import api from './services/api';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
@@ -25,6 +27,12 @@ const PublicLayout = ({ children }) => (
 );
 
 function App() {
+  // Proactively pre-warm Render backend in the background so registration,
+  // login, and dashboard requests respond instantly without cold-start delay
+  useEffect(() => {
+    api.get('/api/health').catch(() => {});
+  }, []);
+
   // Initialize theme: Light theme by default, dark mode if explicitly set
   if (typeof window !== 'undefined') {
     const theme = localStorage.getItem('theme');

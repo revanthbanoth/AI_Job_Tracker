@@ -149,7 +149,8 @@ const Resumes = () => {
             setSelectedResumeForInspect(newResume);
         } catch (error) {
             console.error('Failed to upload resume', error);
-            alert(error.response?.data?.message || 'Failed to upload resume');
+            const serverMsg = error.response?.data?.message;
+            alert(serverMsg || error.message || 'Failed to upload resume. Please ensure your file is a valid PDF or Word document (max 10MB).');
         } finally {
             setUploading(false);
         }
@@ -420,7 +421,7 @@ const Resumes = () => {
                         <p className="text-xs text-muted font-sans">
                             {selectedFile
                                 ? `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB ready for parsing`
-                                : 'Supports PDF and DOCX files up to 5MB'}
+                                : 'Supports PDF and DOCX files up to 10MB'}
                         </p>
                         <input
                             type="file"

@@ -117,14 +117,20 @@ const uploadResume = asyncHandler(async (req, res) => {
                 version: result.version
             });
         } catch (error) {
-            console.error('Upload Failed:', error);
-            res.status(500);
-
-            if (error.message && error.message.includes('Must supply api_key')) {
-                throw new Error('Server Config Error: Cloudinary API Key missing. Please check Render environment variables.');
+            console.warn('[ResumeUpload] Cloudinary upload notice:', error.message, '- Falling back to local storage');
+            // Safe fallback: Save file to local uploads directory
+            const uploadDir = path.join(__dirname, '../uploads');
+            if (!fs.existsSync(uploadDir)) {
+                fs.mkdirSync(uploadDir, { recursive: true });
             }
+            const uniqueFilename = `${Date.now()}-${cleanFileName}`;
+            const localFilePath = path.join(uploadDir, uniqueFilename);
+            fs.writeFileSync(localFilePath, req.file.buffer);
 
-            throw new Error('Image upload failed: ' + error.message);
+            const protocol = req.protocol;
+            const host = req.get('host');
+            resumeUrl = `${protocol}://${host}/uploads/${uniqueFilename}`;
+            console.log('Saved resume locally to:', localFilePath);
         }
     } else {
         // Fallback: Save file to local uploads directory
