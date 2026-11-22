@@ -129,15 +129,15 @@ const Layout = () => {
 
     return (
         <div className="flex h-screen w-full bg-background text-text overflow-hidden transition-colors duration-300">
-            {/* Sidebar (Left, Fixed, Solid Warm Surface) */}
-            <aside className="w-20 md:w-64 h-screen flex-shrink-0 bg-card border-r border-border flex flex-col justify-between transition-colors duration-300 z-20 select-none shadow-warm-sm">
+            {/* Desktop Sidebar (Left, Fixed, Solid Warm Surface - Hidden on mobile) */}
+            <aside className="hidden md:flex md:w-64 h-screen flex-shrink-0 bg-card border-r border-border flex-col justify-between transition-colors duration-300 z-20 select-none shadow-warm-sm">
                 <div>
                     {/* Brand Header */}
-                    <div className="h-16 flex items-center justify-center md:justify-start md:px-6 border-b border-border">
+                    <div className="h-16 flex items-center px-6 border-b border-border">
                         <div className="h-9 w-9 bg-primary rounded-xl flex items-center justify-center font-serif font-bold text-lg text-white shadow-warm">
                             JT
                         </div>
-                        <div className="ml-3 hidden md:block">
+                        <div className="ml-3">
                             <span className="font-serif font-bold text-xl tracking-tight text-text">JobTracker</span>
                             <span className="block text-[10px] text-muted -mt-0.5">Thoughtful Careers</span>
                         </div>
@@ -160,7 +160,7 @@ const Layout = () => {
                         <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-xs font-serif font-bold text-primary">
                             {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                         </div>
-                        <div className="hidden md:block overflow-hidden">
+                        <div className="overflow-hidden">
                             <div className="font-medium text-sm truncate text-text">{user?.name || 'My Account'}</div>
                             <div className="text-xs text-muted truncate">{user?.email}</div>
                         </div>
@@ -171,9 +171,12 @@ const Layout = () => {
             {/* Main Wrapper */}
             <div className="flex-1 flex flex-col h-screen min-w-0 overflow-hidden relative">
                 {/* Top Bar (Solid Warm Surface) */}
-                <header className="h-16 flex-shrink-0 border-b border-border bg-card/90 backdrop-blur-sm flex items-center justify-between px-6 z-10 sticky top-0 transition-colors duration-300">
-                    <div className="flex items-center gap-4 text-muted">
-                        <h2 className="font-serif text-xl font-bold text-text capitalize">
+                <header className="h-16 flex-shrink-0 border-b border-border bg-card/90 backdrop-blur-sm flex items-center justify-between px-4 sm:px-6 z-10 sticky top-0 transition-colors duration-300">
+                    <div className="flex items-center gap-2.5">
+                        <div className="md:hidden h-8 w-8 bg-primary rounded-xl flex items-center justify-center font-serif font-bold text-sm text-white shadow-warm shrink-0">
+                            JT
+                        </div>
+                        <h2 className="font-serif text-lg sm:text-xl font-bold text-text capitalize truncate">
                             {location.pathname === '/' ? 'Dashboard' : location.pathname.substring(1)}
                         </h2>
                     </div>
@@ -187,7 +190,7 @@ const Layout = () => {
                                 placeholder="Search by role or company..."
                                 value={searchQuery}
                                 onChange={handleSearchChange}
-                                className="bg-card-subtle/80 border border-border rounded-xl pl-9 pr-8 py-1.5 text-sm focus:outline-none focus:border-primary text-text w-64 transition-all placeholder-muted font-sans"
+                                className="bg-card-subtle/80 border border-border rounded-xl pl-9 pr-8 py-1.5 text-sm focus:outline-none focus:border-primary text-text w-52 lg:w-64 transition-all placeholder-muted font-sans"
                             />
                             {searchQuery && (
                                 <button
@@ -247,12 +250,22 @@ const Layout = () => {
                 </header>
 
                 {/* Main Content: Single Scroll Container with Solid Warm Surface */}
-                <main className="flex-1 overflow-y-auto overflow-x-hidden p-6 sm:p-8 z-0 flex flex-col justify-between custom-scrollbar bg-background transition-colors duration-300">
+                <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 md:p-8 pb-24 md:pb-8 z-0 flex flex-col justify-between custom-scrollbar bg-background transition-colors duration-300">
                     <div className="flex-1 pb-8">
                         <Outlet context={{ searchQuery, setSearchQuery }} />
                     </div>
                     <Footer />
                 </main>
+
+                {/* Mobile Bottom Navigation Bar (Screens < md) */}
+                <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-md border-t border-border flex items-center justify-around py-2 px-1 shadow-warm-lg select-none">
+                    <MobileNavItem to="/" icon={<LayoutDashboard size={19} />} label="Home" active={location.pathname === '/'} />
+                    <MobileNavItem to="/applications" icon={<Briefcase size={19} />} label="Jobs" active={location.pathname === '/applications'} />
+                    <MobileNavItem to="/calendar" icon={<Calendar size={19} />} label="Calendar" active={location.pathname === '/calendar'} />
+                    <MobileNavItem to="/analytics" icon={<BarChart2 size={19} />} label="Stats" active={location.pathname === '/analytics'} />
+                    <MobileNavItem to="/resumes" icon={<FileText size={19} />} label="Resumes" active={location.pathname === '/resumes'} />
+                    <MobileNavItem to="/settings" icon={<Settings size={19} />} label="Settings" active={location.pathname === '/settings'} />
+                </nav>
             </div>
 
             {/* Notifications Modal */}
@@ -346,6 +359,20 @@ const NavItem = ({ to, icon, label, active }) => (
             {icon}
         </div>
         <span className="hidden md:block text-sm">{label}</span>
+    </Link>
+);
+
+const MobileNavItem = ({ to, icon, label, active }) => (
+    <Link
+        to={to}
+        className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all duration-150 ${
+            active ? 'text-primary font-bold' : 'text-muted hover:text-text'
+        }`}
+    >
+        <div className={`p-1 rounded-lg ${active ? 'bg-primary/10' : ''}`}>
+            {icon}
+        </div>
+        <span className="text-[10px] mt-0.5 tracking-tight font-medium">{label}</span>
     </Link>
 );
 

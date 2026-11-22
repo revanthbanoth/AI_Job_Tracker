@@ -306,7 +306,7 @@ const CalendarPage = () => {
                             return (
                                 <div
                                     key={idx}
-                                    className={`min-h-[90px] sm:min-h-[105px] p-1.5 rounded-xl border transition-all flex flex-col justify-between ${
+                                    className={`min-h-[60px] sm:min-h-[105px] p-1 sm:p-1.5 rounded-xl border transition-all flex flex-col justify-between ${
                                         cell.isCurrentMonth
                                             ? 'bg-card-subtle/30 border-border/80'
                                             : 'bg-card-subtle/10 border-border/30 opacity-40'
@@ -314,7 +314,7 @@ const CalendarPage = () => {
                                 >
                                     <div className="flex items-center justify-between">
                                         <span
-                                            className={`text-xs font-mono font-semibold rounded-md w-6 h-6 flex items-center justify-center ${
+                                            className={`text-[11px] sm:text-xs font-mono font-semibold rounded-md w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center ${
                                                 isToday
                                                     ? 'bg-primary text-white font-bold'
                                                     : cell.isCurrentMonth ? 'text-text' : 'text-muted'
@@ -327,8 +327,21 @@ const CalendarPage = () => {
                                         )}
                                     </div>
 
-                                    {/* Events inside this day */}
-                                    <div className="space-y-1 mt-1 overflow-hidden flex-1">
+                                    {/* Mobile: Minimalist dot indicators */}
+                                    <div className="flex sm:hidden items-center justify-center gap-1 mt-0.5 flex-wrap">
+                                        {cellEvents.slice(0, 3).map((ev) => (
+                                            <span
+                                                key={ev.id}
+                                                className={`w-1.5 h-1.5 rounded-full ${
+                                                    ev.type === 'interview' ? 'bg-amber' : ev.type === 'deadline' ? 'bg-terracotta' : 'bg-sage'
+                                                }`}
+                                                title={ev.title}
+                                            />
+                                        ))}
+                                    </div>
+
+                                    {/* Tablet & Desktop: Full event chips */}
+                                    <div className="hidden sm:block space-y-1 mt-1 overflow-hidden flex-1">
                                         {cellEvents.slice(0, 2).map((ev) => (
                                             <div
                                                 key={ev.id}
