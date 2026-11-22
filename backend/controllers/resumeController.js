@@ -24,86 +24,89 @@ const uploadResume = asyncHandler(async (req, res) => {
     }
 
     let result;
-    try {
-        // Sanitize filename to prevent URL issues (401 errors on raw files with special chars)
-        const cleanFileName = req.file.originalname.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_.-]/g, '');
-        // For 'auto' resource_type (usually images/PDFs), Cloudinary adds the extension automatically.
-        // We strip .pdf from the end of public_id to avoid double extension (file.pdf.pdf)
-        // Determine resource type and public ID based on file type
-        // Use 'raw' for proper file handling (avoids image-specific transformation errors)
-        const resourceType = 'raw';
-        const isPdf = req.file.mimetype === 'application/pdf';
+    let resumeUrl;
+    const cleanFileName = req.file.originalname.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_.-]/g, '');
 
-        // Ensure extension is in public_id for raw files
-        let finalPublicId = cleanFileName;
-        const ext = path.extname(req.file.originalname).toLowerCase();
-        if (!finalPublicId.toLowerCase().endsWith(ext)) {
-            finalPublicId += ext;
-        }
+    const isCloudinaryConfigured = Boolean(
+        process.env.CLOUDINARY_URL ||
+        (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET)
+    );
 
-        const uploadFromBuffer = (buffer) => {
-            return new Promise((resolve, reject) => {
-                const stream = cloudinary.uploader.upload_stream(
-                    {
-                        folder: 'resumes',
-                        resource_type: resourceType,
-                        type: 'authenticated', // Changed from 'private' to 'authenticated' for better raw file support
-                        resource_type: 'raw',
-                        // access_mode: 'public', // REMOVED: Must be private
-                        public_id: finalPublicId,
-                        use_filename: true,
-                        unique_filename: true
-                    },
-                    (error, result) => {
-                        if (error) {
-                            console.error('Cloudinary Upload Error:', error);
-                            reject(error);
-                        } else {
-                            resolve(result);
+    if (isCloudinaryConfigured) {
+        try {
+            const resourceType = 'raw';
+            let finalPublicId = cleanFileName;
+            const ext = path.extname(req.file.originalname).toLowerCase();
+            if (!finalPublicId.toLowerCase().endsWith(ext)) {
+                finalPublicId += ext;
+            }
+
+            const uploadFromBuffer = (buffer) => {
+                return new Promise((resolve, reject) => {
+                    const stream = cloudinary.uploader.upload_stream(
+                        {
+                            folder: 'resumes',
+                            resource_type: resourceType,
+                            type: 'authenticated',
+                            public_id: finalPublicId,
+                            use_filename: true,
+                            unique_filename: true
+                        },
+                        (error, result) => {
+                            if (error) {
+                                console.error('Cloudinary Upload Error:', error);
+                                reject(error);
+                            } else {
+                                resolve(result);
+                            }
                         }
-                    }
-                );
-                // Write buffer to stream
-                const Readable = require('stream').Readable;
-                const bufferStream = new Readable();
-                bufferStream.push(buffer);
-                bufferStream.push(null);
-                bufferStream.pipe(stream);
+                    );
+                    const Readable = require('stream').Readable;
+                    const bufferStream = new Readable();
+                    bufferStream.push(buffer);
+                    bufferStream.push(null);
+                    bufferStream.pipe(stream);
+                });
+            };
+
+            result = await uploadFromBuffer(req.file.buffer);
+
+            resumeUrl = cloudinary.url(result.public_id, {
+                resource_type: 'raw',
+                type: 'authenticated',
+                secure: true,
+                sign_url: true,
+                version: result.version
             });
-        };
+        } catch (error) {
+            console.error('Upload Failed:', error);
+            res.status(500);
 
-        result = await uploadFromBuffer(req.file.buffer);
+            if (error.message && error.message.includes('Must supply api_key')) {
+                throw new Error('Server Config Error: Cloudinary API Key missing. Please check Render environment variables.');
+            }
 
-    } catch (error) {
-        console.error('Upload Failed:', error);
-        res.status(500);
-
-        // Handle specific Cloudinary config error
-        if (error.message && error.message.includes('Must supply api_key')) {
-            throw new Error('Server Config Error: Cloudinary API Key missing. Please check Render environment variables.');
+            throw new Error('Image upload failed: ' + error.message);
         }
+    } else {
+        // Fallback: Save file to local uploads directory
+        const uploadDir = path.join(__dirname, '../uploads');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        const uniqueFilename = `${Date.now()}-${cleanFileName}`;
+        const localFilePath = path.join(uploadDir, uniqueFilename);
+        fs.writeFileSync(localFilePath, req.file.buffer);
 
-        throw new Error('Image upload failed: ' + error.message);
+        const protocol = req.protocol;
+        const host = req.get('host');
+        resumeUrl = `${protocol}://${host}/uploads/${uniqueFilename}`;
+        console.log('Saved resume locally to:', localFilePath);
     }
 
     const { name } = req.body;
-    // Calculate realistic size string
     const sizeInMB = (req.file.size / 1024 / 1024).toFixed(2);
-
-    // Auto-generate ATS score (Simulation of initial general quality analysis)
     const atsScore = Math.floor(Math.random() * (95 - 75) + 75);
-
-    // Generate accurate Resume URL
-    // For PDFs (image type), we use fl_attachment to force download.
-    // For Raw files, we use secure_url directly if public, but for private we need signature.
-
-    resumeUrl = cloudinary.url(result.public_id, {
-        resource_type: 'raw',
-        type: 'authenticated', // Match authenticated upload
-        secure: true,
-        sign_url: true,
-        version: result.version // Explicitly include version to ensure signature validity
-    });
 
     console.log('Processing resume upload for:', req.file.originalname);
     const resume = await Resume.create({
@@ -136,6 +139,15 @@ const deleteResume = asyncHandler(async (req, res) => {
         if (resume.user.toString() !== req.user._id.toString()) {
             res.status(401);
             throw new Error('User not authorized');
+        }
+
+        // Clean up local file if stored locally
+        if (resume.resumeUrl && resume.resumeUrl.includes('/uploads/')) {
+            const filename = resume.resumeUrl.split('/uploads/').pop();
+            const localFilePath = path.join(__dirname, '../uploads', filename);
+            if (fs.existsSync(localFilePath)) {
+                try { fs.unlinkSync(localFilePath); } catch (e) { console.error('Failed to delete local file:', e); }
+            }
         }
 
         await resume.deleteOne();

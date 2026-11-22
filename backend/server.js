@@ -48,7 +48,7 @@ app.use(cors({
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
 // Serve static files from uploads directory
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/resumes', require('./routes/resumeRoutes'));
