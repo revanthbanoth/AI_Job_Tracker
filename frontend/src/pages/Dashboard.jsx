@@ -9,6 +9,7 @@ import DoodleEmptyState from '../components/DoodleEmptyState';
 import Counter from '../components/Counter';
 import WeeklyGoalRing from '../components/WeeklyGoalRing';
 import { DashboardSkeleton } from '../components/SkeletonLoader';
+import AiCopilotModal from '../components/AiCopilotModal';
 
 const AI_TIPS = [
     {
@@ -47,12 +48,20 @@ const Dashboard = () => {
     const [upcomingInterviews, setUpcomingInterviews] = useState([]);
     const [tipIndex, setTipIndex] = useState(0);
     const [loading, setLoading] = useState(true);
+    const [resumes, setResumes] = useState([]);
+    const [isCopilotOpen, setIsCopilotOpen] = useState(false);
+    const [selectedAppForCopilot, setSelectedAppForCopilot] = useState(null);
+    const [copilotInitialTab, setCopilotInitialTab] = useState('cover_letter');
 
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
-                const { data } = await api.get(`/api/applications`);
-                const apps = Array.isArray(data) ? data : [];
+                const [appsRes, resumesRes] = await Promise.all([
+                    api.get(`/api/applications`).catch(() => ({ data: [] })),
+                    api.get(`/api/resumes`).catch(() => ({ data: [] }))
+                ]);
+                const apps = Array.isArray(appsRes.data) ? appsRes.data : [];
+                setResumes(Array.isArray(resumesRes.data) ? resumesRes.data : []);
 
                 const total = apps.length;
                 const interviews = apps.filter(app => app.status === 'Interviewing' || app.status === 'Interview').length;
@@ -247,9 +256,18 @@ const Dashboard = () => {
                                                 <p className="text-xs text-muted font-sans">Role: {app.position} • Review team background and technical stories.</p>
                                             </div>
                                         </div>
-                                        <Link to="/applications" className="px-3 py-1.5 bg-card hover:bg-card-subtle text-text border border-border rounded-lg text-xs font-medium shrink-0">
-                                            Prep Now
-                                        </Link>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setSelectedAppForCopilot(app);
+                                                setCopilotInitialTab('interview_prep');
+                                                setIsCopilotOpen(true);
+                                            }}
+                                            className="px-3 py-1.5 bg-amber/20 hover:bg-amber/30 text-amber-800 dark:text-amber-300 border border-amber/30 rounded-lg text-xs font-semibold shrink-0 cursor-pointer transition-colors flex items-center gap-1.5"
+                                        >
+                                            <Sparkles size={12} />
+                                            <span>Prep with AI</span>
+                                        </button>
                                     </div>
                                 ))}
 
@@ -269,9 +287,18 @@ const Dashboard = () => {
                                                 </p>
                                             </div>
                                         </div>
-                                        <Link to="/applications" className="px-3 py-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-white rounded-lg text-xs font-medium transition-colors shrink-0">
-                                            Follow Up
-                                        </Link>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setSelectedAppForCopilot(app);
+                                                setCopilotInitialTab('email_drafter');
+                                                setIsCopilotOpen(true);
+                                            }}
+                                            className="px-3 py-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-white rounded-lg text-xs font-semibold transition-colors shrink-0 cursor-pointer flex items-center gap-1.5"
+                                        >
+                                            <Sparkles size={12} />
+                                            <span>Draft Follow-Up</span>
+                                        </button>
                                     </div>
                                 ))}
                             </div>
@@ -317,7 +344,18 @@ const Dashboard = () => {
 
                     <div className="mt-4 pt-3 border-t border-border flex items-center justify-between text-[11px] text-muted">
                         <span>Tip {tipIndex + 1} of {AI_TIPS.length}</span>
-                        <span className="text-primary font-medium">Curated for Search Intent</span>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setSelectedAppForCopilot(null);
+                                setCopilotInitialTab('cover_letter');
+                                setIsCopilotOpen(true);
+                            }}
+                            className="text-primary hover:underline font-semibold flex items-center gap-1 cursor-pointer"
+                        >
+                            <span>Open Copilot</span>
+                            <ArrowRight size={11} />
+                        </button>
                     </div>
                 </motion.div>
             </div>
@@ -392,6 +430,18 @@ const Dashboard = () => {
                     </div>
                 )}
             </motion.div>
+
+            {/* AI Career Copilot Modal */}
+            <AiCopilotModal
+                isOpen={isCopilotOpen}
+                onClose={() => {
+                    setIsCopilotOpen(false);
+                    setSelectedAppForCopilot(null);
+                }}
+                application={selectedAppForCopilot}
+                resumes={resumes}
+                initialTab={copilotInitialTab}
+            />
         </motion.div>
     );
 };

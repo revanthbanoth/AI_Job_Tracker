@@ -10,6 +10,7 @@ import KanbanBoard from '../components/KanbanBoard';
 import ApplicationsTable from '../components/ApplicationsTable';
 import JobExtractorModal from '../components/JobExtractorModal';
 import ApplicationDetailModal from '../components/ApplicationDetailModal';
+import AiCopilotModal from '../components/AiCopilotModal';
 import { triggerOfferConfetti } from '../utils/confetti';
 
 const StatusBadge = ({ status, onStatusChange }) => {
@@ -109,6 +110,9 @@ const Applications = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isExtractorOpen, setIsExtractorOpen] = useState(false);
     const [selectedAppForDetail, setSelectedAppForDetail] = useState(null);
+    const [selectedAppForCopilot, setSelectedAppForCopilot] = useState(null);
+    const [copilotInitialTab, setCopilotInitialTab] = useState('cover_letter');
+    const [isCopilotOpen, setIsCopilotOpen] = useState(false);
 
     const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
     const [selectedCompany, setSelectedCompany] = useState(null);
@@ -571,6 +575,20 @@ Education: Bachelor of Science in Computer Science.`);
                         )}
                     </div>
 
+                    {/* AI Copilot Button */}
+                    <button
+                        onClick={() => {
+                            setSelectedAppForCopilot(null);
+                            setCopilotInitialTab('cover_letter');
+                            setIsCopilotOpen(true);
+                        }}
+                        className="bg-primary/10 hover:bg-primary text-primary hover:text-white border border-primary/25 px-3.5 py-2 rounded-xl transition-all font-medium text-xs sm:text-sm shadow-warm-sm flex items-center gap-2 transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+                        title="Open AI Career Copilot for cover letters, email drafting, and interview prep"
+                    >
+                        <Sparkles className="w-4 h-4" />
+                        <span className="hidden sm:inline">AI Copilot</span>
+                    </button>
+
                     {/* Add from Job Description Button */}
                     <button
                         onClick={() => setIsExtractorOpen(true)}
@@ -662,6 +680,11 @@ Education: Bachelor of Science in Computer Science.`);
                         setIsModalOpen(true);
                     }}
                     onAnalyzeApp={openAnalyzeModal}
+                    onOpenCopilot={(app, tab) => {
+                        setSelectedAppForCopilot(app);
+                        setCopilotInitialTab(tab || 'cover_letter');
+                        setIsCopilotOpen(true);
+                    }}
                 />
             ) : viewMode === 'table' ? (
                 <ApplicationsTable
@@ -669,6 +692,11 @@ Education: Bachelor of Science in Computer Science.`);
                     onSelectApp={setSelectedAppForDetail}
                     onAnalyzeApp={openAnalyzeModal}
                     onDeleteApp={handleDelete}
+                    onOpenCopilot={(app, tab) => {
+                        setSelectedAppForCopilot(app);
+                        setCopilotInitialTab(tab || 'cover_letter');
+                        setIsCopilotOpen(true);
+                    }}
                 />
             ) : (
                 <motion.div
@@ -725,16 +753,30 @@ Education: Bachelor of Science in Computer Science.`);
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-3 relative z-10 pt-4 border-t border-border">
+                            <div className="flex items-center gap-2 relative z-10 pt-4 border-t border-border">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedAppForCopilot(app);
+                                        setCopilotInitialTab('cover_letter');
+                                        setIsCopilotOpen(true);
+                                    }}
+                                    className="px-3 py-2 bg-amber/15 hover:bg-amber/25 text-amber-700 dark:text-amber-400 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                                    title="Open AI Copilot for this application"
+                                >
+                                    <Sparkles className="w-3.5 h-3.5 text-amber" />
+                                    <span>AI Copilot</span>
+                                </button>
+
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         openAnalyzeModal(app);
                                     }}
-                                    className="flex-1 py-2.5 bg-primary/10 hover:bg-primary text-primary hover:text-white rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 group/btn cursor-pointer"
+                                    className="flex-1 py-2 bg-primary/10 hover:bg-primary text-primary hover:text-white rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5 group/btn cursor-pointer"
                                 >
-                                    <Sparkles className="w-4 h-4" />
-                                    <span>Analyze Match</span>
+                                    <Briefcase className="w-3.5 h-3.5" />
+                                    <span>Analyze</span>
                                 </button>
 
                                 <button
@@ -742,7 +784,7 @@ Education: Bachelor of Science in Computer Science.`);
                                         e.stopPropagation();
                                         handleDelete(app.id || app._id);
                                     }}
-                                    className="p-2.5 text-muted hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all cursor-pointer"
+                                    className="p-2 text-muted hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all cursor-pointer"
                                     title="Delete Application"
                                 >
                                     <Trash2 className="w-4 h-4" />
@@ -1180,6 +1222,23 @@ Education: Bachelor of Science in Computer Science.`);
                     handleDelete(deletedId);
                     setSelectedAppForDetail(null);
                 }}
+                onOpenCopilot={(app, tab) => {
+                    setSelectedAppForCopilot(app);
+                    setCopilotInitialTab(tab || 'cover_letter');
+                    setIsCopilotOpen(true);
+                }}
+            />
+
+            {/* AI Career Copilot Modal */}
+            <AiCopilotModal
+                isOpen={isCopilotOpen}
+                onClose={() => {
+                    setIsCopilotOpen(false);
+                    setSelectedAppForCopilot(null);
+                }}
+                application={selectedAppForCopilot}
+                resumes={resumes}
+                initialTab={copilotInitialTab}
             />
 
             {/* Analysis Modal */}

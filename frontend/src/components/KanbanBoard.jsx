@@ -18,7 +18,8 @@ const KanbanBoard = ({
     onSelectApp,
     onStatusChange,
     onQuickAdd,
-    onAnalyzeApp
+    onAnalyzeApp,
+    onOpenCopilot
 }) => {
     const shouldReduceMotion = useReducedMotion();
     const now = new Date();
@@ -163,14 +164,26 @@ const KanbanBoard = ({
                                                     </button>
                                                 </div>
 
-                                                <button
-                                                    type="button"
-                                                    onClick={() => onAnalyzeApp(app)}
-                                                    className="px-2 py-0.5 hover:bg-primary/10 text-primary text-[11px] rounded font-medium flex items-center gap-1 transition-colors cursor-pointer"
-                                                >
-                                                    <Sparkles size={11} />
-                                                    <span>Match</span>
-                                                </button>
+                                                <div className="flex items-center gap-1.5">
+                                                    {onOpenCopilot && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => onOpenCopilot(app, 'cover_letter')}
+                                                            className="px-2 py-0.5 hover:bg-amber/15 text-amber-700 dark:text-amber-400 text-[11px] rounded font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                                                            title="Open AI Copilot for this application"
+                                                        >
+                                                            <Sparkles size={11} />
+                                                            <span>AI</span>
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => onAnalyzeApp(app)}
+                                                        className="px-2 py-0.5 hover:bg-primary/10 text-primary text-[11px] rounded font-medium flex items-center gap-1 transition-colors cursor-pointer"
+                                                    >
+                                                        <span>Match</span>
+                                                    </button>
+                                                </div>
                                             </div>
                                         </motion.div>
                                     );

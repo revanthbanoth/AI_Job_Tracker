@@ -1,4 +1,4 @@
-import { Sparkles, Trash2, ExternalLink, FileText, MapPin, DollarSign, Clock } from 'lucide-react';
+import { Sparkles, Trash2, ExternalLink, FileText, MapPin, DollarSign, Clock, Bot } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const StatusBadge = ({ status, onStatusChange }) => {
@@ -28,7 +28,7 @@ const StatusBadge = ({ status, onStatusChange }) => {
     );
 };
 
-const ApplicationsTable = ({ applications = [], onSelectApp, onAnalyzeApp, onDeleteApp }) => {
+const ApplicationsTable = ({ applications = [], onSelectApp, onAnalyzeApp, onDeleteApp, onOpenCopilot }) => {
     const now = new Date();
 
     return (
@@ -103,6 +103,16 @@ const ApplicationsTable = ({ applications = [], onSelectApp, onAnalyzeApp, onDel
                                             onClick={(e) => e.stopPropagation()}
                                             className="flex items-center justify-end gap-2"
                                         >
+                                            {onOpenCopilot && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => onOpenCopilot(app, 'cover_letter')}
+                                                    className="p-1.5 hover:bg-amber/20 text-amber-700 dark:text-amber-400 rounded-lg transition-colors cursor-pointer"
+                                                    title="Open AI Copilot (Cover letters, bullet tailoring, prep)"
+                                                >
+                                                    <Bot size={16} />
+                                                </button>
+                                            )}
                                             <button
                                                 type="button"
                                                 onClick={() => onAnalyzeApp(app)}

@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import Modal from './Modal';
 import api from '../services/api';
-import { ExternalLink, Calendar, MapPin, DollarSign, UserCheck, Trash2, Save, Plus, Clock, CheckCircle2, ChevronRight, FileText } from 'lucide-react';
+import { ExternalLink, Calendar, MapPin, DollarSign, UserCheck, Trash2, Save, Plus, Clock, CheckCircle2, ChevronRight, FileText, Sparkles } from 'lucide-react';
 import { triggerOfferConfetti } from '../utils/confetti';
 
-const ApplicationDetailModal = ({ isOpen, onClose, application, onUpdated, onDeleted, resumes = [] }) => {
+const ApplicationDetailModal = ({ isOpen, onClose, application, onUpdated, onDeleted, resumes = [], onOpenCopilot }) => {
     if (!application) return null;
 
     const [activeTab, setActiveTab] = useState('details'); // 'details' | 'contacts' | 'timeline'
@@ -129,40 +129,57 @@ const ApplicationDetailModal = ({ isOpen, onClose, application, onUpdated, onDel
             title={`${company || 'Application'} • Details`}
         >
             <div className="space-y-5">
-                {/* Tabs */}
-                <div className="flex bg-card-subtle p-1 rounded-xl border border-border">
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('details')}
-                        className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                            activeTab === 'details' ? 'bg-card text-text shadow-sm' : 'text-muted hover:text-text'
-                        }`}
-                    >
-                        Overview & Role
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('contacts')}
-                        className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 ${
-                            activeTab === 'contacts' ? 'bg-card text-text shadow-sm' : 'text-muted hover:text-text'
-                        }`}
-                    >
-                        <span>Contacts</span>
-                        {contacts.length > 0 && (
-                            <span className="w-4 h-4 rounded-full bg-primary/20 text-primary text-[10px] flex items-center justify-center font-bold">
-                                {contacts.length}
-                            </span>
-                        )}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('timeline')}
-                        className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                            activeTab === 'timeline' ? 'bg-card text-text shadow-sm' : 'text-muted hover:text-text'
-                        }`}
-                    >
-                        Status Timeline
-                    </button>
+                {/* Tabs & AI Copilot Action */}
+                <div className="flex flex-wrap items-center justify-between gap-2.5">
+                    <div className="flex bg-card-subtle p-1 rounded-xl border border-border flex-1">
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('details')}
+                            className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                                activeTab === 'details' ? 'bg-card text-text shadow-sm' : 'text-muted hover:text-text'
+                            }`}
+                        >
+                            Overview & Role
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('contacts')}
+                            className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                                activeTab === 'contacts' ? 'bg-card text-text shadow-sm' : 'text-muted hover:text-text'
+                            }`}
+                        >
+                            <span>Contacts</span>
+                            {contacts.length > 0 && (
+                                <span className="w-4 h-4 rounded-full bg-primary/20 text-primary text-[10px] flex items-center justify-center font-bold">
+                                    {contacts.length}
+                                </span>
+                            )}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('timeline')}
+                            className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                                activeTab === 'timeline' ? 'bg-card text-text shadow-sm' : 'text-muted hover:text-text'
+                            }`}
+                        >
+                            Status Timeline
+                        </button>
+                    </div>
+
+                    {onOpenCopilot && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                onClose();
+                                onOpenCopilot(application, 'cover_letter');
+                            }}
+                            className="px-3.5 py-1.5 rounded-xl bg-primary/10 hover:bg-primary text-primary hover:text-white border border-primary/25 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-warm-sm"
+                            title="Generate cover letters, emails, or interview questions for this job"
+                        >
+                            <Sparkles size={13} />
+                            <span>AI Copilot</span>
+                        </button>
+                    )}
                 </div>
 
                 {activeTab === 'details' && (
