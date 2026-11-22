@@ -168,6 +168,33 @@ const Resumes = () => {
         }
     };
 
+    const handleOpenFile = async (e, resume) => {
+        if (e) e.preventDefault();
+        // 1. If already a valid signed Cloudinary URL or public raw upload URL, open directly
+        if (resume.resumeUrl && (resume.resumeUrl.includes('api.cloudinary.com') || resume.resumeUrl.includes('/raw/upload/'))) {
+            window.open(resume.resumeUrl, '_blank', 'noopener,noreferrer');
+            return;
+        }
+
+        // 2. Fetch fresh signed URL from backend
+        try {
+            const resumeId = resume.id || resume._id;
+            const { data } = await api.get(`/api/resumes/${resumeId}/file?json=true`);
+            if (data && data.url) {
+                window.open(data.url, '_blank', 'noopener,noreferrer');
+                return;
+            }
+        } catch (err) {
+            console.warn('Could not fetch signed url, trying direct redirect:', err);
+        }
+
+        // 3. Fallback: open via backend file route with auth token
+        const token = sessionStorage.getItem('token') || (sessionStorage.getItem('userInfo') ? JSON.parse(sessionStorage.getItem('userInfo')).token : null) || localStorage.getItem('token');
+        const baseUrl = api.defaults.baseURL || '';
+        const fileUrl = `${baseUrl}/api/resumes/${resume.id || resume._id}/file?token=${encodeURIComponent(token || '')}`;
+        window.open(fileUrl, '_blank', 'noopener,noreferrer');
+    };
+
     const triggerFileSelect = () => {
         if (fileInputRef.current) {
             fileInputRef.current.click();
@@ -341,10 +368,11 @@ const Resumes = () => {
                                         {resume.resumeUrl ? (
                                             <a
                                                 href={resume.resumeUrl}
+                                                onClick={(e) => handleOpenFile(e, resume)}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="px-3 py-2 bg-card-subtle hover:bg-card text-text border border-border rounded-xl text-xs font-medium transition-colors inline-flex items-center gap-1 cursor-pointer"
-                                                title="View original file"
+                                                title="View or download resume file"
                                             >
                                                 <span>File</span>
                                                 <ArrowUpRight size={13} />

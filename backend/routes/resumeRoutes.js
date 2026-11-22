@@ -23,5 +23,6 @@ router.post('/:id/score', protect, scoreResumeAgainstJob);
 router.put('/:id/bullets/:index', protect, updateBulletFixStatus);
 router.get('/:id/history', protect, getScoreHistory);
 router.get('/:id/download', protect, downloadResume);
+router.get('/:id/file', protect, downloadResume);
 
 module.exports = router;

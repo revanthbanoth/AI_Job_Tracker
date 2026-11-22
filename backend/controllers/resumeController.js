@@ -6,6 +6,26 @@ const path = require('path');
 const { parseDocument } = require('../services/documentParser');
 const { analyzeResumeDeterministic } = require('../services/atsEngine');
 
+// Helper: generate signed download URL for raw authenticated Cloudinary assets
+const getSignedResumeUrl = (rawUrl, fileName) => {
+    if (!rawUrl) return rawUrl;
+    if (rawUrl.includes('raw/authenticated') && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+        try {
+            const matches = rawUrl.match(/resumes\/[^?#]+/);
+            const publicId = matches ? decodeURIComponent(matches[0]) : `resumes/${fileName}`;
+            const ext = path.extname(publicId || fileName || '').replace('.', '').toLowerCase() || 'pdf';
+            return cloudinary.utils.private_download_url(publicId, ext, {
+                resource_type: 'raw',
+                type: 'authenticated',
+                expires_at: Math.floor(Date.now() / 1000) + 7200 // 2 hours validity
+            });
+        } catch (e) {
+            console.error('Error generating Cloudinary signed download URL:', e);
+        }
+    }
+    return rawUrl;
+};
+
 // @desc    Get user resumes
 // @route   GET /api/resumes
 // @access  Private
@@ -13,7 +33,11 @@ const getResumes = asyncHandler(async (req, res) => {
     const resumes = await Resume.find({ user: req.user._id })
         .sort({ createdAt: -1 })
         .lean();
-    res.json(resumes);
+    const formatted = resumes.map(r => ({
+        ...r,
+        resumeUrl: getSignedResumeUrl(r.resumeUrl, r.fileName)
+    }));
+    res.json(formatted);
 });
 
 // @desc    Upload resume with deterministic ATS analysis
@@ -60,7 +84,7 @@ const uploadResume = asyncHandler(async (req, res) => {
                         {
                             folder: 'resumes',
                             resource_type: resourceType,
-                            type: 'authenticated',
+                            type: 'upload',
                             public_id: finalPublicId,
                             use_filename: true,
                             unique_filename: true
@@ -84,11 +108,10 @@ const uploadResume = asyncHandler(async (req, res) => {
 
             const result = await uploadFromBuffer(req.file.buffer);
 
-            resumeUrl = cloudinary.url(result.public_id, {
+            resumeUrl = result.secure_url || cloudinary.url(result.public_id, {
                 resource_type: 'raw',
-                type: 'authenticated',
+                type: 'upload',
                 secure: true,
-                sign_url: true,
                 version: result.version
             });
         } catch (error) {
@@ -300,21 +323,46 @@ const deleteResume = asyncHandler(async (req, res) => {
     }
 });
 
-// @desc    Download resume
+// @desc    Download or view resume file
+// @route   GET /api/resumes/:id/file
 // @route   GET /api/resumes/:id/download
 // @access  Private
 const downloadResume = asyncHandler(async (req, res) => {
     const resume = await Resume.findById(req.params.id);
 
-    if (resume && resume.resumeUrl) {
-        if (resume.user.toString() !== req.user._id.toString()) {
-            res.status(401);
-            throw new Error('Not authorized');
-        }
-        res.redirect(resume.resumeUrl);
-    } else {
+    if (!resume) {
         res.status(404);
         throw new Error('Resume not found');
+    }
+
+    if (resume.user.toString() !== req.user._id.toString()) {
+        res.status(401);
+        throw new Error('Not authorized');
+    }
+
+    // 1. If local file stored in uploads
+    if (resume.resumeUrl && resume.resumeUrl.includes('/uploads/')) {
+        const filename = resume.resumeUrl.split('/uploads/')[1];
+        const localPath = path.join(__dirname, '../uploads', filename);
+        if (fs.existsSync(localPath)) {
+            return res.sendFile(localPath);
+        }
+    }
+
+    // 2. Generate signed URL for Cloudinary if authenticated
+    const signedUrl = getSignedResumeUrl(resume.resumeUrl, resume.fileName);
+
+    if (req.query.json === 'true' || req.headers.accept?.includes('application/json')) {
+        return res.json({ url: signedUrl || resume.resumeUrl });
+    }
+
+    if (signedUrl) {
+        return res.redirect(signedUrl);
+    } else if (resume.resumeUrl) {
+        return res.redirect(resume.resumeUrl);
+    } else {
+        res.status(404);
+        throw new Error('Resume file unavailable');
     }
 });
 
