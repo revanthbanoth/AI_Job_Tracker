@@ -17,7 +17,7 @@ const Login = () => {
         setLoading(true);
         setError('');
         try {
-            await login(email, password);
+            await login(email.trim(), password);
             navigate('/');
         } catch (err) {
             setError(err.response?.data?.message || 'We could not sign you in. Please check your credentials.');
@@ -26,7 +26,7 @@ const Login = () => {
     };
 
     return (
-        <div className="w-full max-w-md p-8 bg-card border border-border rounded-card shadow-warm-lg relative">
+        <div className="w-full max-w-[420px] p-6 sm:p-7 bg-card border border-border rounded-2xl shadow-warm-lg relative my-auto">
             {/* Artisan Brand Icon */}
             <div className="text-center mb-6">
                 <div className="w-12 h-12 bg-terracotta/10 text-primary rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-warm">

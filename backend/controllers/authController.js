@@ -11,7 +11,8 @@ const sendEmail = require('../utils/sendEmail');
 const authUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
+    const cleanEmail = email ? email.trim() : '';
+    const user = await User.findOne({ email: { $regex: new RegExp(`^${cleanEmail}$`, 'i') } });
 
     if (user && (await user.matchPassword(password))) {
         const token = generateToken(res, user._id);
@@ -34,7 +35,8 @@ const registerUser = asyncHandler(async (req, res) => {
     const { name, email, password } = req.body;
     console.log('Register Request:', { name, email, password }); // Debug log
 
-    const userExists = await User.findOne({ email });
+    const cleanEmail = email ? email.trim().toLowerCase() : '';
+    const userExists = await User.findOne({ email: { $regex: new RegExp(`^${cleanEmail}$`, 'i') } });
 
     if (userExists) {
         res.status(400);

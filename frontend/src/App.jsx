@@ -16,8 +16,8 @@ import Footer from './components/Footer';
 
 // Public page wrapper to include consistent footer without breaking viewport
 const PublicLayout = ({ children }) => (
-  <div className="min-h-screen w-full flex flex-col justify-between bg-background text-text overflow-y-auto">
-    <div className="flex-1 flex items-center justify-center">
+  <div className="h-full w-full flex flex-col justify-between bg-background text-text overflow-y-auto">
+    <div className="flex-1 flex items-center justify-center p-4 sm:p-6 my-auto">
       {children}
     </div>
     <Footer />
