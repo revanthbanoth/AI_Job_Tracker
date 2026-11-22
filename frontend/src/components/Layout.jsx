@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import Footer from './Footer';
-import { LayoutDashboard, FileText, Briefcase, Settings, LogOut, Bell, Search, X, CheckCircle2, ArrowRight, Sun, Moon, BarChart2 } from 'lucide-react';
+import { LayoutDashboard, FileText, Briefcase, Settings, LogOut, Bell, Search, X, CheckCircle2, ArrowRight, Sun, Moon, BarChart2, Calendar } from 'lucide-react';
 import Modal from './Modal';
 
 const Layout = () => {
@@ -147,6 +147,7 @@ const Layout = () => {
                     <nav className="py-6 space-y-1.5 px-3">
                         <NavItem to="/" icon={<LayoutDashboard size={19} />} label="Dashboard" active={location.pathname === '/'} />
                         <NavItem to="/applications" icon={<Briefcase size={19} />} label="Applications" active={location.pathname === '/applications'} />
+                        <NavItem to="/calendar" icon={<Calendar size={19} />} label="Calendar" active={location.pathname === '/calendar'} />
                         <NavItem to="/analytics" icon={<BarChart2 size={19} />} label="Analytics" active={location.pathname === '/analytics'} />
                         <NavItem to="/resumes" icon={<FileText size={19} />} label="Resumes" active={location.pathname === '/resumes'} />
                         <NavItem to="/settings" icon={<Settings size={19} />} label="Settings" active={location.pathname === '/settings'} />

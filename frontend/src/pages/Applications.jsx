@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useOutletContext, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Briefcase, Filter, Plus, Search, Sparkles, Trash2, ArrowRight, X, Check, ChevronDown, Columns3, Table, LayoutGrid } from 'lucide-react';
+import { Briefcase, Filter, Plus, Search, Sparkles, Trash2, ArrowRight, X, Check, ChevronDown, Columns3, Table, LayoutGrid, Download } from 'lucide-react';
 import Modal from '../components/Modal';
 import HeadingUnderline from '../components/HeadingUnderline';
 import DoodleEmptyState from '../components/DoodleEmptyState';
@@ -11,6 +11,7 @@ import ApplicationsTable from '../components/ApplicationsTable';
 import JobExtractorModal from '../components/JobExtractorModal';
 import ApplicationDetailModal from '../components/ApplicationDetailModal';
 import AiCopilotModal from '../components/AiCopilotModal';
+import ExportModal from '../components/ExportModal';
 import { triggerOfferConfetti } from '../utils/confetti';
 
 const StatusBadge = ({ status, onStatusChange }) => {
@@ -113,6 +114,7 @@ const Applications = () => {
     const [selectedAppForCopilot, setSelectedAppForCopilot] = useState(null);
     const [copilotInitialTab, setCopilotInitialTab] = useState('cover_letter');
     const [isCopilotOpen, setIsCopilotOpen] = useState(false);
+    const [isExportOpen, setIsExportOpen] = useState(false);
 
     const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
     const [selectedCompany, setSelectedCompany] = useState(null);
@@ -597,6 +599,16 @@ Education: Bachelor of Science in Computer Science.`);
                     >
                         <Sparkles className="w-4 h-4 text-amber" />
                         <span className="hidden sm:inline">Add from JD</span>
+                    </button>
+
+                    {/* Export Data Button */}
+                    <button
+                        onClick={() => setIsExportOpen(true)}
+                        className="bg-card hover:bg-card-subtle text-text border border-border px-3.5 py-2 rounded-xl transition-all font-medium text-xs sm:text-sm shadow-warm-sm flex items-center gap-2 transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+                        title="Export pipeline data to CSV or printable summary"
+                    >
+                        <Download className="w-4 h-4" />
+                        <span className="hidden sm:inline">Export</span>
                     </button>
 
                     {/* Manual Add Application Button */}
@@ -1239,6 +1251,13 @@ Education: Bachelor of Science in Computer Science.`);
                 application={selectedAppForCopilot}
                 resumes={resumes}
                 initialTab={copilotInitialTab}
+            />
+
+            {/* Pipeline Data Export Modal */}
+            <ExportModal
+                isOpen={isExportOpen}
+                onClose={() => setIsExportOpen(false)}
+                applications={applications}
             />
 
             {/* Analysis Modal */}

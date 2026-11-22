@@ -15,6 +15,14 @@ const userSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    shareToken: {
+        type: String,
+        default: null
+    },
+    shareTokenEnabled: {
+        type: Boolean,
+        default: false
+    }
 }, {
     timestamps: true
 });

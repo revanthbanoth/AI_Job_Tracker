@@ -55,6 +55,7 @@ app.use('/api/resumes', require('./routes/resumeRoutes'));
 app.use('/api/applications', require('./routes/applicationRoutes'));
 app.use('/api/analysis', require('./routes/analysisRoutes'));
 app.use('/api/ai', require('./routes/aiCopilotRoutes'));
+app.use('/api/share', require('./routes/shareRoutes'));
 
 app.use((req, res) => {
     res.sendFile(

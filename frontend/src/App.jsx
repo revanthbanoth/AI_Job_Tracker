@@ -7,6 +7,8 @@ import Applications from './pages/Applications';
 import Resumes from './pages/Resumes';
 import Settings from './pages/Settings';
 import Analytics from './pages/Analytics';
+import CalendarPage from './pages/CalendarPage';
+import ShareProgressPage from './pages/ShareProgressPage';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import Footer from './components/Footer';
@@ -39,6 +41,7 @@ function App() {
         <Route path="/login" element={<PublicLayout><Login /></PublicLayout>} />
         <Route path="/register" element={<PublicLayout><Register /></PublicLayout>} />
         <Route path="/forgot-password" element={<PublicLayout><ForgotPassword /></PublicLayout>} />
+        <Route path="/share/:token" element={<PublicLayout><ShareProgressPage /></PublicLayout>} />
 
         {/* Protected Routes inside Layout */}
         <Route
@@ -51,6 +54,7 @@ function App() {
         >
           <Route index element={<Dashboard />} />
           <Route path="applications" element={<Applications />} />
+          <Route path="calendar" element={<CalendarPage />} />
           <Route path="analytics" element={<Analytics />} />
           <Route path="resumes" element={<Resumes />} />
           <Route path="settings" element={<Settings />} />

@@ -3,13 +3,16 @@ import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Briefcase, Calendar, Trophy, HeartHandshake, ArrowRight, Plus, Sparkles, Clock, AlertCircle, CheckCircle2, Flame, ExternalLink } from 'lucide-react';
+import { Briefcase, Calendar, Trophy, HeartHandshake, ArrowRight, Plus, Sparkles, Clock, AlertCircle, CheckCircle2, Flame, ExternalLink, Download, Share2 } from 'lucide-react';
 import HeadingUnderline from '../components/HeadingUnderline';
 import DoodleEmptyState from '../components/DoodleEmptyState';
 import Counter from '../components/Counter';
 import WeeklyGoalRing from '../components/WeeklyGoalRing';
 import { DashboardSkeleton } from '../components/SkeletonLoader';
 import AiCopilotModal from '../components/AiCopilotModal';
+import ExportModal from '../components/ExportModal';
+import ShareModal from '../components/ShareModal';
+import MoodCheckInWidget from '../components/MoodCheckInWidget';
 
 const AI_TIPS = [
     {
@@ -43,6 +46,7 @@ const Dashboard = () => {
         offerRate: 0,
         rejectionRate: 0
     });
+    const [applications, setApplications] = useState([]);
     const [recentApps, setRecentApps] = useState([]);
     const [staleApps, setStaleApps] = useState([]);
     const [upcomingInterviews, setUpcomingInterviews] = useState([]);
@@ -52,6 +56,8 @@ const Dashboard = () => {
     const [isCopilotOpen, setIsCopilotOpen] = useState(false);
     const [selectedAppForCopilot, setSelectedAppForCopilot] = useState(null);
     const [copilotInitialTab, setCopilotInitialTab] = useState('cover_letter');
+    const [isExportOpen, setIsExportOpen] = useState(false);
+    const [isShareOpen, setIsShareOpen] = useState(false);
 
     useEffect(() => {
         const fetchDashboardData = async () => {
@@ -61,6 +67,7 @@ const Dashboard = () => {
                     api.get(`/api/resumes`).catch(() => ({ data: [] }))
                 ]);
                 const apps = Array.isArray(appsRes.data) ? appsRes.data : [];
+                setApplications(apps);
                 setResumes(Array.isArray(resumesRes.data) ? resumesRes.data : []);
 
                 const total = apps.length;
@@ -158,13 +165,33 @@ const Dashboard = () => {
                         Let&rsquo;s move one application forward today.
                     </p>
                 </div>
-                <Link
-                    to="/applications"
-                    className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-hover transition-colors group self-start sm:self-auto cursor-pointer"
-                >
-                    <span>View All Applications</span>
-                    <ArrowRight size={16} className="transform group-hover:translate-x-1 transition-transform" />
-                </Link>
+                <div className="flex items-center gap-2.5 flex-wrap self-start sm:self-auto">
+                    <button
+                        type="button"
+                        onClick={() => setIsExportOpen(true)}
+                        className="px-3 py-2 bg-card hover:bg-card-subtle text-text border border-border rounded-xl text-xs sm:text-sm font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-warm-sm"
+                        title="Export applications to CSV or printable summary"
+                    >
+                        <Download size={15} />
+                        <span>Export</span>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setIsShareOpen(true)}
+                        className="px-3 py-2 bg-sage/15 hover:bg-sage/25 text-sage border border-sage/30 rounded-xl text-xs sm:text-sm font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-warm-sm"
+                        title="Share read-only progress with a mentor or coach"
+                    >
+                        <Share2 size={15} />
+                        <span>Share Progress</span>
+                    </button>
+                    <Link
+                        to="/applications"
+                        className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-hover transition-colors group cursor-pointer pl-1"
+                    >
+                        <span>View Board</span>
+                        <ArrowRight size={16} className="transform group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                </div>
             </motion.div>
 
             {/* Solid Warm Stats Grid */}
@@ -360,9 +387,10 @@ const Dashboard = () => {
                 </motion.div>
             </div>
 
-            {/* Weekly Goal Ring Widget */}
-            <motion.div variants={item}>
+            {/* Weekly Goal Ring Widget & Search Mindset Check-in */}
+            <motion.div variants={item} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <WeeklyGoalRing current={stats.thisWeek} target={5} />
+                <MoodCheckInWidget />
             </motion.div>
 
             {/* Recent Applications List */}
@@ -441,6 +469,19 @@ const Dashboard = () => {
                 application={selectedAppForCopilot}
                 resumes={resumes}
                 initialTab={copilotInitialTab}
+            />
+
+            {/* Pipeline Data Export Modal */}
+            <ExportModal
+                isOpen={isExportOpen}
+                onClose={() => setIsExportOpen(false)}
+                applications={applications}
+            />
+
+            {/* Read-Only Share Progress Modal */}
+            <ShareModal
+                isOpen={isShareOpen}
+                onClose={() => setIsShareOpen(false)}
             />
         </motion.div>
     );

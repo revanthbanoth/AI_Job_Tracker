@@ -28,7 +28,10 @@ const addApplication = asyncHandler(async (req, res) => {
         notes,
         skills,
         contacts,
-        resumeId
+        resumeId,
+        interviewDate,
+        deadlineDate,
+        calendarNotes
     } = req.body;
 
     const initialStatus = status || 'Applied';
@@ -47,6 +50,9 @@ const addApplication = asyncHandler(async (req, res) => {
         skills: Array.isArray(skills) ? skills : [],
         contacts: Array.isArray(contacts) ? contacts : [],
         resumeId: resumeId || null,
+        interviewDate: interviewDate || null,
+        deadlineDate: deadlineDate || null,
+        calendarNotes: calendarNotes || '',
         statusTimeline: [{
             status: initialStatus,
             date: new Date(),
@@ -91,7 +97,10 @@ const updateApplication = asyncHandler(async (req, res) => {
         notes,
         skills,
         contacts,
-        resumeId
+        resumeId,
+        interviewDate,
+        deadlineDate,
+        calendarNotes
     } = req.body;
 
     if (company !== undefined) application.company = company;
@@ -105,6 +114,9 @@ const updateApplication = asyncHandler(async (req, res) => {
     if (skills !== undefined) application.skills = skills;
     if (contacts !== undefined) application.contacts = contacts;
     if (resumeId !== undefined) application.resumeId = resumeId || null;
+    if (interviewDate !== undefined) application.interviewDate = interviewDate;
+    if (deadlineDate !== undefined) application.deadlineDate = deadlineDate;
+    if (calendarNotes !== undefined) application.calendarNotes = calendarNotes;
 
     // Track status change in timeline
     if (status !== undefined && status !== application.status) {

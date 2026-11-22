@@ -51,6 +51,15 @@ const applicationSchema = mongoose.Schema({
     resumeId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Resume'
+    },
+    interviewDate: {
+        type: Date
+    },
+    deadlineDate: {
+        type: Date
+    },
+    calendarNotes: {
+        type: String
     }
 }, {
     timestamps: true
