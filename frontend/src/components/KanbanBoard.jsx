@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Plus, Clock, MapPin, DollarSign, ArrowRight, ArrowLeft, ExternalLink, Sparkles, FileText, CheckCircle2 } from 'lucide-react';
+import { Plus, Clock, MapPin, DollarSign, ArrowRight, ArrowLeft, ExternalLink, Sparkles, FileText, CheckCircle2, LayoutGrid, Columns3 } from 'lucide-react';
 import { triggerOfferConfetti } from '../utils/confetti';
 
 const COLUMNS = [
@@ -24,6 +25,20 @@ const KanbanBoard = ({
     const shouldReduceMotion = useReducedMotion();
     const now = new Date();
 
+    const [boardLayout, setBoardLayout] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('kanban_board_layout') || 'wrap';
+        }
+        return 'wrap';
+    });
+
+    const handleLayoutToggle = (mode) => {
+        setBoardLayout(mode);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('kanban_board_layout', mode);
+        }
+    };
+
     const handleMove = (app, direction) => {
         const currentIndex = STAGE_ORDER.indexOf(app.status === 'Interview' ? 'Interviewing' : app.status);
         const nextIndex = direction === 'forward' ? currentIndex + 1 : currentIndex - 1;
@@ -37,20 +52,71 @@ const KanbanBoard = ({
     };
 
     return (
-        <div className="flex gap-4 overflow-x-auto pb-4 pt-2 -mx-2 px-2 custom-scrollbar min-h-[550px] items-start select-none">
-            {COLUMNS.map((col) => {
-                const colApps = applications.filter(a => {
-                    if (col.id === 'Interviewing') {
-                        return a.status === 'Interviewing' || a.status === 'Interview';
-                    }
-                    return a.status === col.id;
-                });
-
-                return (
-                    <div
-                        key={col.id}
-                        className="w-72 shrink-0 bg-card/60 backdrop-blur-xs border border-border rounded-card p-3 shadow-warm-sm flex flex-col max-h-[82vh]"
+        <div className="space-y-3">
+            {/* Board Layout Sub-bar */}
+            <div className="flex items-center justify-between px-1">
+                <div className="text-xs text-muted font-medium flex items-center gap-2">
+                    <span className="font-semibold text-text">6 Pipeline Stages</span>
+                    <span className="text-[10px] text-muted">•</span>
+                    <span className="text-[11px] text-muted hidden sm:inline">
+                        {boardLayout === 'wrap' ? '2-row grid (scrolls down naturally)' : 'Horizontal scrolling lane'}
+                    </span>
+                </div>
+                <div className="flex items-center gap-1 bg-card border border-border rounded-xl p-1 shadow-warm-sm">
+                    <button
+                        type="button"
+                        onClick={() => handleLayoutToggle('wrap')}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+                            boardLayout === 'wrap'
+                                ? 'bg-primary text-white font-semibold shadow-xs'
+                                : 'text-muted hover:text-text hover:bg-card-subtle'
+                        }`}
+                        title="Stack stages into 2 rows without horizontal scrolling"
                     >
+                        <LayoutGrid size={13} />
+                        <span>Wrap Down</span>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => handleLayoutToggle('lane')}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+                            boardLayout === 'lane'
+                                ? 'bg-primary text-white font-semibold shadow-xs'
+                                : 'text-muted hover:text-text hover:bg-card-subtle'
+                        }`}
+                        title="Single lane horizontal scroll"
+                    >
+                        <Columns3 size={13} />
+                        <span>Scroll Lane</span>
+                    </button>
+                </div>
+            </div>
+
+            {/* Stages Columns Container */}
+            <div
+                className={
+                    boardLayout === 'wrap'
+                        ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 select-none pb-2'
+                        : 'flex gap-4 overflow-x-auto pb-4 pt-1 -mx-2 px-2 custom-scrollbar items-start select-none'
+                }
+            >
+                {COLUMNS.map((col) => {
+                    const colApps = applications.filter(a => {
+                        if (col.id === 'Interviewing') {
+                            return a.status === 'Interviewing' || a.status === 'Interview';
+                        }
+                        return a.status === col.id;
+                    });
+
+                    return (
+                        <div
+                            key={col.id}
+                            className={
+                                boardLayout === 'wrap'
+                                    ? 'w-full bg-card/60 backdrop-blur-xs border border-border rounded-card p-3.5 shadow-warm-sm flex flex-col min-h-[170px]'
+                                    : 'w-72 shrink-0 bg-card/60 backdrop-blur-xs border border-border rounded-card p-3 shadow-warm-sm flex flex-col max-h-[82vh]'
+                            }
+                        >
                         {/* Column Header */}
                         <div className="flex items-center justify-between pb-3 mb-2 border-b border-border">
                             <div className="flex items-center gap-2">
@@ -194,7 +260,8 @@ const KanbanBoard = ({
                 );
             })}
         </div>
-    );
+    </div>
+);
 };
 
 export default KanbanBoard;
