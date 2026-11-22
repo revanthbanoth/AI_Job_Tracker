@@ -62,7 +62,6 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
 
 // Lightweight health-check endpoint for instant wake-up & uptime monitoring
 app.get('/api/health', (req, res) => {
