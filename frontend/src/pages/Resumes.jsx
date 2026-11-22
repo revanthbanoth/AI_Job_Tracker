@@ -8,7 +8,7 @@ import AtsScoreModal from '../components/AtsScoreModal';
 import { motion, useReducedMotion } from 'framer-motion';
 import {
     UploadCloud, FileText, Trash2, CheckCircle2, AlertCircle,
-    ArrowUpRight, Sparkles, ShieldCheck, Target, AlertTriangle
+    ArrowUpRight, Sparkles, ShieldCheck, Target, AlertTriangle, Info
 } from 'lucide-react';
 
 const Resumes = () => {
