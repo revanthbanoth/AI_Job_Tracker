@@ -60,6 +60,18 @@ const applicationSchema = mongoose.Schema({
     },
     calendarNotes: {
         type: String
+    },
+    interviewReminder24hSent: {
+        type: Boolean,
+        default: false
+    },
+    interviewReminder1hSent: {
+        type: Boolean,
+        default: false
+    },
+    followUpReminderSent: {
+        type: Boolean,
+        default: false
     }
 }, {
     timestamps: true

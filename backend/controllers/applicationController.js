@@ -1,6 +1,7 @@
 const asyncHandler = require('express-async-handler');
 const Application = require('../models/Application');
 const axios = require('axios');
+const emailService = require('../services/emailService');
 
 // @desc    Get user applications
 // @route   GET /api/applications
@@ -61,6 +62,11 @@ const addApplication = asyncHandler(async (req, res) => {
     });
 
     if (application) {
+        if (application.interviewDate) {
+            emailService.sendInterviewScheduledEmail(req.user, application).catch(err => {
+                console.error('[EmailService] Failed to send Interview Scheduled email:', err.message);
+            });
+        }
         res.status(201).json(application);
     } else {
         res.status(400);
@@ -103,6 +109,9 @@ const updateApplication = asyncHandler(async (req, res) => {
         calendarNotes
     } = req.body;
 
+    const oldInterviewDate = application.interviewDate ? new Date(application.interviewDate).getTime() : null;
+    const oldStatus = application.status;
+
     if (company !== undefined) application.company = company;
     if (position !== undefined) application.position = position;
     if (jobUrl !== undefined) application.jobUrl = jobUrl;
@@ -132,6 +141,34 @@ const updateApplication = asyncHandler(async (req, res) => {
     }
 
     const updated = await application.save();
+
+    // Check email triggers
+    const newInterviewDate = updated.interviewDate ? new Date(updated.interviewDate).getTime() : null;
+    if (newInterviewDate && newInterviewDate !== oldInterviewDate) {
+        // Reset reminder flags for new date
+        updated.interviewReminder24hSent = false;
+        updated.interviewReminder1hSent = false;
+        await updated.save();
+
+        emailService.sendInterviewScheduledEmail(req.user, updated).catch(err => {
+            console.error('[EmailService] Failed to send Interview Scheduled email:', err.message);
+        });
+    }
+
+    if (updated.status !== oldStatus) {
+        if (updated.status === 'Offer' || updated.status === 'Offered') {
+            emailService.sendOfferReceivedEmail(req.user, updated).catch(err => {
+                console.error('[EmailService] Failed to send Offer email:', err.message);
+            });
+        } else if (updated.status === 'Rejected') {
+            Application.countDocuments({ user: req.user._id }).then(totalApps => {
+                emailService.sendRejectionEmail(req.user, updated, totalApps).catch(err => {
+                    console.error('[EmailService] Failed to send Rejection email:', err.message);
+                });
+            }).catch(e => console.error(e));
+        }
+    }
+
     res.json(updated);
 });
 

@@ -1,9 +1,11 @@
 const asyncHandler = require('express-async-handler');
 const User = require('../models/User');
+const Application = require('../models/Application');
+const Resume = require('../models/Resume');
 const generateToken = require('../utils/generateToken');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
-const sendEmail = require('../utils/sendEmail');
+const emailService = require('../services/emailService');
 
 // @desc    Auth user & get token
 // @route   POST /api/auth/login
@@ -15,11 +17,16 @@ const authUser = asyncHandler(async (req, res) => {
     const user = await User.findOne({ email: { $regex: new RegExp(`^${cleanEmail}$`, 'i') } });
 
     if (user && (await user.matchPassword(password))) {
+        // Record last active time for inactivity nudge calculations
+        user.lastActiveAt = new Date();
+        await user.save();
+
         const token = generateToken(res, user._id);
         res.json({
             _id: user._id,
             name: user.name,
             email: user.email,
+            emailPreferences: user.emailPreferences,
             token
         });
     } else {
@@ -33,7 +40,6 @@ const authUser = asyncHandler(async (req, res) => {
 // @access  Public
 const registerUser = asyncHandler(async (req, res) => {
     const { name, email, password } = req.body;
-    console.log('Register Request:', { name, email, password }); // Debug log
 
     const cleanEmail = email ? email.trim().toLowerCase() : '';
     const userExists = await User.findOne({ email: { $regex: new RegExp(`^${cleanEmail}$`, 'i') } });
@@ -49,16 +55,24 @@ const registerUser = asyncHandler(async (req, res) => {
     try {
         const user = await User.create({
             name,
-            email,
-            password: hashedPassword
+            email: cleanEmail,
+            password: hashedPassword,
+            unsubscribeToken: crypto.randomBytes(16).toString('hex'),
+            lastActiveAt: new Date()
         });
 
         if (user) {
+            // Dispatch 1. WELCOME (on signup) asynchronously
+            emailService.sendWelcomeEmail(user).catch(err => {
+                console.error('[EmailService] Failed to send Welcome email:', err.message);
+            });
+
             const token = generateToken(res, user._id);
             res.status(201).json({
                 _id: user._id,
                 name: user.name,
                 email: user.email,
+                emailPreferences: user.emailPreferences,
                 token
             });
         } else {
@@ -90,20 +104,30 @@ const updateUserProfile = asyncHandler(async (req, res) => {
 
     if (user) {
         user.name = req.body.name || user.name;
-        user.email = req.body.email || user.email;
+        user.email = req.body.email ? req.body.email.trim().toLowerCase() : user.email;
+        let passwordChanged = false;
 
         if (req.body.password) {
             const salt = await bcrypt.genSalt(10);
             user.password = await bcrypt.hash(req.body.password, salt);
+            passwordChanged = true;
         }
 
+        user.lastActiveAt = new Date();
         const updatedUser = await user.save();
-        console.log('Profile updated for user:', updatedUser._id);
+
+        if (passwordChanged) {
+            // Dispatch 3. PASSWORD CHANGED
+            emailService.sendPasswordChangedEmail(updatedUser).catch(err => {
+                console.error('[EmailService] Failed to send Password Changed email:', err.message);
+            });
+        }
 
         res.json({
             _id: updatedUser._id,
             name: updatedUser.name,
             email: updatedUser.email,
+            emailPreferences: updatedUser.emailPreferences,
         });
     } else {
         res.status(404);
@@ -115,16 +139,19 @@ const updateUserProfile = asyncHandler(async (req, res) => {
 // @route   GET /api/auth/verify
 // @access  Private
 const verifyUser = asyncHandler(async (req, res) => {
-    // If we reach here, the 'protect' middleware has already verified the token
-    // and attached the user to req.user
     const user = await User.findById(req.user._id).select('-password').lean();
 
     if (user) {
+        // Bump activity
+        User.updateOne({ _id: user._id }, { $set: { lastActiveAt: new Date() } }).exec();
+
         res.json({
             _id: user._id,
             name: user.name,
             email: user.email,
-            // We can optionally refresh the token here if needed, but for now just verification
+            emailPreferences: user.emailPreferences,
+            shareToken: user.shareToken,
+            shareTokenEnabled: user.shareTokenEnabled,
         });
     } else {
         res.status(401);
@@ -132,7 +159,7 @@ const verifyUser = asyncHandler(async (req, res) => {
     }
 });
 
-// @desc    Direct Password Reset (No email required)
+// @desc    Forgot Password - Request reset link
 // @route   POST /api/auth/forgot-password
 // @access  Public
 const forgotPassword = asyncHandler(async (req, res) => {
@@ -143,15 +170,15 @@ const forgotPassword = asyncHandler(async (req, res) => {
         throw new Error('Please provide your registered email address');
     }
 
-    // Case-insensitive user lookup
-    const user = await User.findOne({ email: { $regex: new RegExp(`^${email.trim()}$`, 'i') } });
+    const cleanEmail = email.trim();
+    const user = await User.findOne({ email: { $regex: new RegExp(`^${cleanEmail}$`, 'i') } });
 
     if (!user) {
         res.status(404);
         throw new Error('No account found with this email address');
     }
 
-    // If password is provided, reset it directly
+    // Direct password reset if password field is provided
     if (password) {
         if (password.length < 6) {
             res.status(400);
@@ -162,11 +189,15 @@ const forgotPassword = asyncHandler(async (req, res) => {
         user.password = await bcrypt.hash(password, salt);
         user.resetPasswordToken = null;
         user.resetPasswordExpire = null;
-
+        user.lastActiveAt = new Date();
         await user.save();
 
-        const authToken = generateToken(res, user._id);
+        // Dispatch 3. PASSWORD CHANGED
+        emailService.sendPasswordChangedEmail(user).catch(err => {
+            console.error('[EmailService] Failed to send Password Changed email:', err.message);
+        });
 
+        const authToken = generateToken(res, user._id);
         return res.status(200).json({
             success: true,
             message: 'Password has been updated successfully!',
@@ -177,59 +208,14 @@ const forgotPassword = asyncHandler(async (req, res) => {
         });
     }
 
-    // If only email is provided, generate token and dispatch real reset email
+    // Generate token and dispatch 2. PASSWORD RESET email
     const resetToken = crypto.randomBytes(32).toString('hex');
     user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
     user.resetPasswordExpire = Date.now() + 30 * 60 * 1000; // 30 minutes
-
     await user.save();
 
-    const clientUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    const resetUrl = `${clientUrl}/reset-password/${resetToken}`;
-
-    const html = `
-    <div style="font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #FAF8F5; padding: 40px 20px; color: #2D2522;">
-        <div style="max-width: 520px; margin: 0 auto; background: #FFFFFF; border-radius: 16px; border: 1px solid #EFEAE4; padding: 36px 32px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);">
-            <div style="text-align: center; margin-bottom: 24px;">
-                <h1 style="color: #D4663A; font-size: 24px; font-weight: 700; margin: 0 0 6px 0; letter-spacing: -0.5px;">AI Job Tracker</h1>
-                <p style="color: #8C827A; font-size: 13px; margin: 0;">Password Reset Request</p>
-            </div>
-            <p style="font-size: 15px; line-height: 1.6; margin-bottom: 16px;">Hello <strong>${user.name || 'there'}</strong>,</p>
-            <p style="font-size: 14px; line-height: 1.6; color: #5C524B; margin-bottom: 24px;">
-                We received a request to reset your password for your AI Job Tracker account. Click the button below to set a new password:
-            </p>
-            <div style="text-align: center; margin: 32px 0;">
-                <a href="${resetUrl}" target="_blank" style="background-color: #D4663A; color: #FFFFFF; text-decoration: none; padding: 14px 28px; border-radius: 10px; font-weight: 600; font-size: 14px; display: inline-block; box-shadow: 0 3px 12px rgba(212, 102, 58, 0.3);">
-                    Reset Password
-                </a>
-            </div>
-            <p style="font-size: 12px; color: #8C827A; line-height: 1.5; margin-bottom: 12px;">
-                If the button above doesn't work, copy and paste this link into your browser:
-            </p>
-            <p style="font-size: 11px; word-break: break-all; color: #D4663A; background: #FAF8F5; padding: 10px; border-radius: 6px; border: 1px solid #EFEAE4;">
-                <a href="${resetUrl}" style="color: #D4663A; text-decoration: none;">${resetUrl}</a>
-            </p>
-            <hr style="border: none; border-top: 1px solid #EFEAE4; margin: 28px 0;" />
-            <p style="font-size: 12px; color: #8C827A; line-height: 1.5; margin: 0;">
-                This link will expire in <strong>30 minutes</strong>.<br />
-                If you didn't request a password reset, you can safely ignore this email — your account remains secure.
-            </p>
-        </div>
-        <div style="text-align: center; margin-top: 20px; font-size: 11px; color: #A69E97;">
-            © ${new Date().getFullYear()} AI Job Tracker. All rights reserved.
-        </div>
-    </div>
-    `;
-
-    const text = `Hello ${user.name || 'there'},\n\nWe received a request to reset your password for AI Job Tracker.\n\nUse the link below to reset your password (valid for 30 minutes):\n${resetUrl}\n\nIf you didn't request this, you can safely ignore this email.`;
-
     try {
-        await sendEmail({
-            to: user.email,
-            subject: 'AI Job Tracker - Password Reset Request',
-            html,
-            text,
-        });
+        await emailService.sendPasswordResetEmail(user, resetToken);
     } catch (emailErr) {
         console.error('[forgotPassword] Error sending email:', emailErr);
         user.resetPasswordToken = null;
@@ -262,7 +248,6 @@ const resetPassword = asyncHandler(async (req, res) => {
         throw new Error('Password must be at least 6 characters long');
     }
 
-    // Hash the token provided in the URL to compare against the hashed token in database
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
     const user = await User.findOne({
@@ -275,15 +260,18 @@ const resetPassword = asyncHandler(async (req, res) => {
         throw new Error('Invalid or expired password reset link. Please request a new one.');
     }
 
-    // Hash the new password
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(password, salt);
     user.resetPasswordToken = null;
     user.resetPasswordExpire = null;
-
+    user.lastActiveAt = new Date();
     await user.save();
 
-    // Generate fresh auth token
+    // Dispatch 3. PASSWORD CHANGED
+    emailService.sendPasswordChangedEmail(user).catch(err => {
+        console.error('[EmailService] Failed to send Password Changed email:', err.message);
+    });
+
     const authToken = generateToken(res, user._id);
 
     res.status(200).json({
@@ -296,6 +284,132 @@ const resetPassword = asyncHandler(async (req, res) => {
     });
 });
 
+// @desc    Get or inspect email preferences
+// @route   GET /api/auth/email-preferences
+// @access  Public / Private (supports query token or auth header)
+const getEmailPreferences = asyncHandler(async (req, res) => {
+    const { token } = req.query;
+    let user;
+
+    if (token) {
+        user = await User.findOne({ unsubscribeToken: token }).select('email name emailPreferences');
+    } else if (req.user) {
+        user = await User.findById(req.user._id).select('email name emailPreferences');
+    }
+
+    if (!user) {
+        res.status(404);
+        throw new Error('User or preference link not found');
+    }
+
+    res.json({
+        success: true,
+        email: user.email,
+        name: user.name,
+        emailPreferences: user.emailPreferences || {
+            reminders: true,
+            weeklySummary: true,
+            inactivityNudge: true,
+            statusUpdates: true,
+        }
+    });
+});
+
+// @desc    Update email preferences
+// @route   POST /api/auth/email-preferences
+// @access  Public / Private
+const updateEmailPreferences = asyncHandler(async (req, res) => {
+    const { token, preferences } = req.body;
+    let user;
+
+    if (token) {
+        user = await User.findOne({ unsubscribeToken: token });
+    } else if (req.user) {
+        user = await User.findById(req.user._id);
+    }
+
+    if (!user) {
+        res.status(404);
+        throw new Error('User or token not found');
+    }
+
+    if (preferences && typeof preferences === 'object') {
+        user.emailPreferences = {
+            ...user.emailPreferences,
+            ...preferences
+        };
+        await user.save();
+    }
+
+    res.json({
+        success: true,
+        message: 'Email preferences updated successfully',
+        emailPreferences: user.emailPreferences
+    });
+});
+
+// @desc    Single-click Unsubscribe from non-security emails
+// @route   GET /api/auth/unsubscribe
+// @access  Public
+const unsubscribeUser = asyncHandler(async (req, res) => {
+    const { token } = req.query;
+
+    if (!token) {
+        res.status(400);
+        throw new Error('Unsubscribe token is required');
+    }
+
+    const user = await User.findOne({ unsubscribeToken: token });
+
+    if (!user) {
+        res.status(404);
+        throw new Error('Invalid or expired unsubscribe link');
+    }
+
+    user.emailPreferences = {
+        reminders: false,
+        weeklySummary: false,
+        inactivityNudge: false,
+        statusUpdates: false,
+    };
+    await user.save();
+
+    res.status(200).json({
+        success: true,
+        message: 'You have been successfully unsubscribed from all optional JobTracker emails.',
+        email: user.email
+    });
+});
+
+// @desc    Delete user account and all associated data
+// @route   DELETE /api/auth/profile
+// @access  Private
+const deleteAccount = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+
+    // Dispatch 13. ACCOUNT DELETED before records are purged
+    try {
+        await emailService.sendAccountDeletedEmail(user);
+    } catch (err) {
+        console.error('[EmailService] Account deleted email notice error:', err.message);
+    }
+
+    // Delete user's applications, resumes, and user document
+    await Application.deleteMany({ user: user._id });
+    await Resume.deleteMany({ user: user._id });
+    await User.findByIdAndDelete(user._id);
+
+    res.status(200).json({
+        success: true,
+        message: 'Your JobTracker account and all data have been completely deleted.'
+    });
+});
+
 module.exports = {
     authUser,
     registerUser,
@@ -304,4 +418,8 @@ module.exports = {
     verifyUser,
     forgotPassword,
     resetPassword,
+    getEmailPreferences,
+    updateEmailPreferences,
+    unsubscribeUser,
+    deleteAccount,
 };

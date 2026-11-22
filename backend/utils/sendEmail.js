@@ -17,7 +17,7 @@ const nodemailer = require('nodemailer');
  * 3. Development / Test fallback:
  *    If no credentials are set, creates an Ethereal test mailbox or logs reset URL.
  */
-const sendEmail = async ({ to, subject, html, text }) => {
+const sendEmail = async ({ to, subject, html, text, attachments }) => {
     let transporter = null;
     let isTestAccount = false;
 
@@ -81,6 +81,10 @@ const sendEmail = async ({ to, subject, html, text }) => {
         text,
         html,
     };
+
+    if (attachments && Array.isArray(attachments) && attachments.length > 0) {
+        mailOptions.attachments = attachments;
+    }
 
     const info = await transporter.sendMail(mailOptions);
     let previewUrl = null;

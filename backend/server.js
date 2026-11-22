@@ -3,9 +3,7 @@ const path = require('path');
 // Force restart for DB change and CORS update
 const dotenv = require('dotenv');
 
-if (process.env.NODE_ENV !== 'production') {
-    dotenv.config();
-}
+dotenv.config();
 
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
@@ -21,19 +19,28 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-const allowedOrigins = [
+const defaultOrigins = [
     'http://localhost:5173',
     'http://localhost:5174',
     'https://ai-job-tracker-htng.onrender.com',
     'https://www.ai-job-tracker-htng.onrender.com'
 ];
-if (process.env.FRONTEND_URL) {
-    allowedOrigins.push(process.env.FRONTEND_URL);
-}
+
+const envOrigins = process.env.FRONTEND_URL 
+    ? process.env.FRONTEND_URL.split(',').map(s => s.trim().replace(/\/$/, '')) 
+    : [];
+
+const allowedOrigins = [...defaultOrigins, ...envOrigins];
 
 app.use(cors({
     origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.onrender.com')) {
+        if (
+            !origin ||
+            allowedOrigins.includes(origin) ||
+            origin.endsWith('.onrender.com') ||
+            origin.endsWith('.vercel.app') ||
+            origin.endsWith('.netlify.app')
+        ) {
             callback(null, true);
         } else {
             console.log('Blocked by CORS:', origin);
@@ -66,9 +73,12 @@ app.use((req, res) => {
 app.use(notFound);
 app.use(errorHandler);
 
+const emailScheduler = require('./services/emailScheduler');
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
     console.log(`Server started on port ${PORT}`);
     console.log(`AI Service URL: ${process.env.AI_SERVICE_URL || 'Not Set (using localhost)'}`);
+    emailScheduler.start(30);
 });

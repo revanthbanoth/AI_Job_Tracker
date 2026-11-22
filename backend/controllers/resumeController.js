@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { parseDocument } = require('../services/documentParser');
 const { analyzeResumeDeterministic } = require('../services/atsEngine');
+const emailService = require('../services/emailService');
 
 // Helper: generate signed download URL for raw authenticated Cloudinary assets
 const getSignedResumeUrl = (rawUrl, fileName) => {
@@ -177,6 +178,13 @@ const uploadResume = asyncHandler(async (req, res) => {
     });
 
     if (resume) {
+        emailService.sendAtsReportReadyEmail(req.user, resume, {
+            score: atsResult.healthScore ?? atsResult.overallScore,
+            deductions: atsResult.deductions
+        }).catch(err => {
+            console.error('[EmailService] Failed to send ATS Report Ready email:', err.message);
+        });
+
         res.status(201).json(resume);
     } else {
         res.status(400);
