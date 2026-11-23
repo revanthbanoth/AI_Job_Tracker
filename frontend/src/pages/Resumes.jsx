@@ -21,6 +21,19 @@ const Resumes = () => {
     const fileInputRef = useRef(null);
 
     const [uploading, setUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [uploadStage, setUploadStage] = useState('');
+    const [uploadError, setUploadError] = useState(null);
+
+    const openUploadModal = () => {
+        setIsUploadOpen(true);
+        setUploadError(null);
+        setUploadProgress(0);
+        setUploadStage('');
+        setSelectedFile(null);
+        // Pre-warm backend for fast response
+        api.get('/api/health').catch(() => {});
+    };
 
     useEffect(() => {
         const fetchResumes = async () => {
@@ -97,9 +110,13 @@ const Resumes = () => {
         const file = e.target.files[0];
         if (!file) return;
 
+        setUploadError(null);
+        setUploadProgress(0);
+        setUploadStage('');
+
         // Prevent uploading massive files that exceed Render/Cloudflare upload limits
         if (file.size > 10 * 1024 * 1024) {
-            alert(`File size is ${(file.size / 1024 / 1024).toFixed(1)}MB. Maximum allowed resume size is 10MB. Please choose a smaller file.`);
+            setUploadError(`File size is ${(file.size / 1024 / 1024).toFixed(1)}MB. Maximum allowed resume size is 10MB. Please choose a smaller file.`);
             e.target.value = '';
             setSelectedFile(null);
             return;
@@ -109,25 +126,61 @@ const Resumes = () => {
     };
 
     const handleUpload = async (e) => {
-        e.preventDefault();
+        if (e && e.preventDefault) e.preventDefault();
         if (!selectedFile) return;
 
         if (selectedFile.size > 10 * 1024 * 1024) {
-            alert('File exceeds 10MB limit. Please select a smaller file.');
+            setUploadError('File exceeds 10MB limit. Please select a smaller file.');
             return;
         }
 
         setUploading(true);
+        setUploadError(null);
+        setUploadProgress(15);
+        setUploadStage('Uploading document to server...');
 
         const formData = new FormData();
         const safeName = selectedFile.name || 'resume.pdf';
         formData.append('resume', selectedFile, safeName);
         formData.append('name', safeName);
 
+        // Resilient uploader with auto-retry for mobile connections
+        const executeUpload = async (attempt = 1) => {
+            try {
+                return await api.post(`/api/resumes`, formData, {
+                    timeout: 120000, // 120s timeout for mobile data connections
+                    onUploadProgress: (progressEvent) => {
+                        if (progressEvent.total) {
+                            const percent = Math.min(
+                                Math.round((progressEvent.loaded * 100) / progressEvent.total),
+                                95
+                            );
+                            setUploadProgress(percent);
+                            if (percent >= 90) {
+                                setUploadStage('Analyzing deterministic ATS score...');
+                            } else {
+                                setUploadStage(`Uploading document ${percent}%...`);
+                            }
+                        }
+                    }
+                });
+            } catch (err) {
+                const isNetErr = err.message === 'Network Error' || err.code === 'ERR_NETWORK' || err.code === 'ECONNABORTED';
+                if (isNetErr && attempt === 1) {
+                    console.warn('[ResumeUpload] Mobile connection hiccup on attempt 1, re-authenticating & retrying in 1.5s...');
+                    setUploadStage('Reconnecting to server...');
+                    await api.get('/api/health').catch(() => {});
+                    await new Promise(r => setTimeout(r, 1500));
+                    return executeUpload(2);
+                }
+                throw err;
+            }
+        };
+
         try {
-            const { data } = await api.post(`/api/resumes`, formData, {
-                timeout: 90000, // 90s timeout for mobile data connections
-            });
+            const { data } = await executeUpload();
+            setUploadProgress(100);
+            setUploadStage('Done!');
 
             const newResume = {
                 id: data._id,
@@ -161,16 +214,18 @@ const Resumes = () => {
             setResumes([newResume, ...resumes]);
             setIsUploadOpen(false);
             setSelectedFile(null);
+            setUploadProgress(0);
+            setUploadStage('');
             // Open the deterministic inspector automatically for the new resume
             setSelectedResumeForInspect(newResume);
         } catch (error) {
             console.error('Failed to upload resume', error);
             const serverMsg = error.response?.data?.message || error.response?.data?.error;
-            const isNetworkError = error.message === 'Network Error' || error.code === 'ERR_NETWORK';
+            const isNetworkError = error.message === 'Network Error' || error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED';
             const displayMsg = serverMsg || (isNetworkError
-                ? 'Network connection issue. Please check your internet connection and try uploading your PDF again.'
+                ? 'Mobile connection issue. Your network connection might be slow or dropped packets. Tap "Retry Upload" below.'
                 : error.message) || 'Failed to upload resume. Please ensure your file is a valid PDF or Word document (max 10MB).';
-            alert(displayMsg);
+            setUploadError(displayMsg);
         } finally {
             setUploading(false);
         }
@@ -255,7 +310,7 @@ const Resumes = () => {
                     </p>
                 </div>
                 <button
-                    onClick={() => setIsUploadOpen(true)}
+                    onClick={openUploadModal}
                     className="bg-primary hover:bg-primary-hover text-white px-5 py-2.5 rounded-xl font-medium shadow-warm hover:shadow-warm-lg transition-all flex items-center gap-2 self-start sm:self-auto cursor-pointer"
                 >
                     <UploadCloud size={18} />
@@ -271,7 +326,7 @@ const Resumes = () => {
                         title="No resumes uploaded yet"
                         description="Upload your primary resume (PDF or DOCX) to get transparent ATS insights, bullet quality analysis, and deterministic job matching scores."
                         actionLabel="Upload First Resume"
-                        onAction={() => setIsUploadOpen(true)}
+                        onAction={openUploadModal}
                     />
                 </motion.div>
             ) : (
@@ -420,22 +475,22 @@ const Resumes = () => {
             )}
 
             {/* Upload Modal */}
-            <Modal isOpen={isUploadOpen} onClose={() => { setIsUploadOpen(false); setSelectedFile(null); }} title="Upload Resume Version">
-                <form onSubmit={handleUpload} className="space-y-5">
+            <Modal isOpen={isUploadOpen} onClose={() => { setIsUploadOpen(false); setSelectedFile(null); setUploadError(null); }} title="Upload Resume Version">
+                <form onSubmit={handleUpload} className="space-y-4">
                     <div
                         onClick={triggerFileSelect}
-                        className={`border-2 border-dashed rounded-card p-8 transition-all cursor-pointer text-center ${
+                        className={`border-2 border-dashed rounded-card p-6 sm:p-8 transition-all cursor-pointer text-center ${
                             selectedFile
                                 ? 'bg-terracotta/5 border-primary/50'
                                 : 'border-border hover:border-primary/40 hover:bg-card-subtle'
                         }`}
                     >
-                        <div className={`w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center transition-colors ${
+                        <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full mx-auto mb-3 flex items-center justify-center transition-colors ${
                             selectedFile ? 'bg-primary/10 text-primary' : 'bg-card-subtle text-muted'
                         }`}>
-                            <UploadCloud size={26} />
+                            <UploadCloud size={24} />
                         </div>
-                        <p className="text-base font-medium text-text mb-1">
+                        <p className="text-sm sm:text-base font-medium text-text mb-1 break-words">
                             {selectedFile ? selectedFile.name : 'Click to select or drag your resume here'}
                         </p>
                         <p className="text-xs text-muted font-sans">
@@ -452,6 +507,54 @@ const Resumes = () => {
                         />
                     </div>
 
+                    {/* Dynamic Upload Progress */}
+                    {uploading && (
+                        <div className="bg-card-subtle p-3 rounded-xl border border-border space-y-2 animate-fade-in">
+                            <div className="flex justify-between text-xs font-medium">
+                                <span className="text-primary flex items-center gap-1.5">
+                                    <div className="animate-spin rounded-full h-3 w-3 border-2 border-primary/30 border-t-primary" />
+                                    {uploadStage || 'Processing...'}
+                                </span>
+                                <span className="text-muted">{uploadProgress}%</span>
+                            </div>
+                            <div className="w-full bg-border rounded-full h-1.5 overflow-hidden">
+                                <div
+                                    className="bg-primary h-1.5 rounded-full transition-all duration-300"
+                                    style={{ width: `${uploadProgress}%` }}
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Inline Error Banner with Retry */}
+                    {uploadError && (
+                        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3.5 text-xs text-red-600 dark:text-red-400 flex flex-col gap-2.5 animate-shake">
+                            <div className="flex items-start gap-2">
+                                <AlertCircle size={16} className="shrink-0 mt-0.5 text-red-500" />
+                                <div className="flex-1">
+                                    <p className="font-semibold text-text">Upload issue</p>
+                                    <p className="mt-0.5 text-muted leading-relaxed">{uploadError}</p>
+                                </div>
+                            </div>
+                            <div className="flex justify-end gap-2 pt-1 border-t border-red-500/15">
+                                <button
+                                    type="button"
+                                    onClick={() => setUploadError(null)}
+                                    className="px-3 py-1.5 text-muted hover:text-text rounded-lg text-xs font-medium transition-colors"
+                                >
+                                    Dismiss
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleUpload}
+                                    className="px-3 py-1.5 bg-primary text-white font-semibold rounded-lg hover:bg-primary-hover shadow-warm transition-colors cursor-pointer text-xs"
+                                >
+                                    Retry Upload
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="bg-card-subtle p-3.5 rounded-xl border border-border text-xs text-muted flex items-start gap-2.5">
                         <ShieldCheck size={16} className="text-primary shrink-0 mt-0.5" />
                         <span>
@@ -462,7 +565,7 @@ const Resumes = () => {
                     <div className="flex justify-end gap-3 pt-2">
                         <button
                             type="button"
-                            onClick={() => { setIsUploadOpen(false); setSelectedFile(null); }}
+                            onClick={() => { setIsUploadOpen(false); setSelectedFile(null); setUploadError(null); }}
                             className="px-4 py-2.5 text-muted hover:text-text rounded-xl transition-colors text-sm font-medium cursor-pointer"
                         >
                             Cancel
@@ -473,7 +576,11 @@ const Resumes = () => {
                             className="px-5 py-2.5 bg-primary hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-sm font-medium shadow-warm transition-all flex items-center gap-2 cursor-pointer"
                         >
                             {uploading && <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white" />}
-                            <span>{uploading ? 'Parsing & Scoring...' : (selectedFile ? 'Upload & Parse Deterministically' : 'Select File')}</span>
+                            <span>
+                                {uploading
+                                    ? (uploadStage || 'Parsing & Scoring...')
+                                    : (selectedFile ? 'Upload & Parse Deterministically' : 'Select File')}
+                            </span>
                         </button>
                     </div>
                 </form>

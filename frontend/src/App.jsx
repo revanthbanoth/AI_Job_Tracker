@@ -16,14 +16,16 @@ import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import Footer from './components/Footer';
 
-// Public page wrapper to fit cleanly in viewport without any scrollbar
+import PullToRefresh from './components/PullToRefresh';
+
+// Public page wrapper that supports mobile pull-to-refresh and natural scrolling
 const PublicLayout = ({ children }) => (
-  <div className="h-screen w-full flex flex-col justify-between bg-background text-text overflow-hidden select-none">
+  <PullToRefresh className="min-h-screen w-full flex flex-col justify-between bg-background text-text overflow-y-auto select-none">
     <div className="flex-1 flex items-center justify-center p-2 sm:p-4 min-h-0">
       {children}
     </div>
     <Footer className="py-2 px-4 text-[11px]" />
-  </div>
+  </PullToRefresh>
 );
 
 function App() {

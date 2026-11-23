@@ -13,21 +13,31 @@ const protect = asyncHandler(async (req, res, next) => {
         token = req.query.token;
     }
 
+    const setCors = () => {
+        if (req.headers.origin) {
+            res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
+            res.setHeader('Access-Control-Allow-Credentials', 'true');
+        }
+    };
+
     if (token) {
         try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
             req.user = await User.findById(decoded.userId || decoded.id).select('-password');
             if (!req.user) {
+                setCors();
                 res.status(401);
                 throw new Error('Not authorized, user not found');
             }
             next();
         } catch (error) {
+            setCors();
             console.error('Token verification failed:', error.message);
             res.status(401);
             throw new Error('Not authorized, token failed');
         }
     } else {
+        setCors();
         res.status(401);
         throw new Error('Not authorized, no token');
     }

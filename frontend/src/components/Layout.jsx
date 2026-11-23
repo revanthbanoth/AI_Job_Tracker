@@ -5,6 +5,7 @@ import api from '../services/api';
 import Footer from './Footer';
 import { LayoutDashboard, FileText, Briefcase, Settings, LogOut, Bell, Search, X, CheckCircle2, ArrowRight, Sun, Moon, BarChart2, Calendar } from 'lucide-react';
 import Modal from './Modal';
+import PullToRefresh from './PullToRefresh';
 
 const Layout = () => {
     const { user, logout } = useAuth();
@@ -249,12 +250,14 @@ const Layout = () => {
                     </div>
                 </header>
 
-                {/* Main Content: Single Scroll Container with Solid Warm Surface */}
+                {/* Main Content: Single Scroll Container with Solid Warm Surface & Mobile Pull-to-Refresh */}
                 <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 md:p-8 pb-36 md:pb-8 z-0 flex flex-col justify-between custom-scrollbar bg-background transition-colors duration-300">
-                    <div className="flex-1 pb-8">
-                        <Outlet context={{ searchQuery, setSearchQuery }} />
-                    </div>
-                    <Footer />
+                    <PullToRefresh className="flex-1 flex flex-col justify-between min-h-full">
+                        <div className="flex-1 pb-8">
+                            <Outlet context={{ searchQuery, setSearchQuery }} />
+                        </div>
+                        <Footer />
+                    </PullToRefresh>
                 </main>
 
                 {/* Mobile Bottom Navigation Bar (Screens < md) */}

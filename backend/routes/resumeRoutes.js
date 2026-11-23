@@ -12,9 +12,28 @@ const {
 const { protect } = require('../middleware/authMiddleware');
 const upload = require('../middleware/uploadMiddleware');
 
+// Safe Multer upload wrapper with explicit CORS and client-safe error messages
+const handleMulterUpload = (req, res, next) => {
+    upload.single('resume')(req, res, (err) => {
+        if (err) {
+            console.error('[ResumeUpload] Multer processing error:', err.message);
+            if (req.headers.origin) {
+                res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
+                res.setHeader('Access-Control-Allow-Credentials', 'true');
+            }
+            return res.status(400).json({
+                message: err.code === 'LIMIT_FILE_SIZE'
+                    ? 'The uploaded file is too large. Maximum allowed size is 10MB.'
+                    : (err.message || 'File upload failed. Please try again.')
+            });
+        }
+        next();
+    });
+};
+
 router.route('/')
     .get(protect, getResumes)
-    .post(protect, upload.single('resume'), uploadResume);
+    .post(protect, handleMulterUpload, uploadResume);
 
 router.route('/:id')
     .delete(protect, deleteResume);
