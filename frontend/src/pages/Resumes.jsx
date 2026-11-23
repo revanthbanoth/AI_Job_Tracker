@@ -139,15 +139,36 @@ const Resumes = () => {
         setUploadProgress(15);
         setUploadStage('Uploading document to server...');
 
-        const formData = new FormData();
-        const safeName = selectedFile.name || 'resume.pdf';
-        formData.append('resume', selectedFile, safeName);
-        formData.append('name', safeName);
+        const cleanFileName = (selectedFile.name || 'resume.pdf')
+            .replace(/\s+/g, '_')
+            .replace(/[^a-zA-Z0-9_.-]/g, '');
 
-        // Resilient uploader with auto-retry for mobile connections
-        const executeUpload = async (attempt = 1) => {
+        const createFormData = () => {
+            const fd = new FormData();
+            fd.append('resume', selectedFile, cleanFileName || 'resume.pdf');
+            fd.append('name', cleanFileName || 'resume.pdf');
+            return fd;
+        };
+
+        const getAuthToken = () => {
+            let token = sessionStorage.getItem('token') || localStorage.getItem('token');
+            if (!token) {
+                const rawUser = sessionStorage.getItem('userInfo') || localStorage.getItem('userInfo');
+                if (rawUser) {
+                    try {
+                        token = JSON.parse(rawUser)?.token;
+                    } catch (e) {
+                        console.error('Error parsing token from storage:', e);
+                    }
+                }
+            }
+            return token;
+        };
+
+        // Dual-engine resilient uploader: Axios with progress -> Native browser fetch fallback
+        const executeUpload = async () => {
             try {
-                return await api.post(`/api/resumes`, formData, {
+                return await api.post(`/api/resumes`, createFormData(), {
                     timeout: 120000, // 120s timeout for mobile data connections
                     onUploadProgress: (progressEvent) => {
                         if (progressEvent.total) {
@@ -165,15 +186,32 @@ const Resumes = () => {
                     }
                 });
             } catch (err) {
-                const isNetErr = err.message === 'Network Error' || err.code === 'ERR_NETWORK' || err.code === 'ECONNABORTED';
-                if (isNetErr && attempt === 1) {
-                    console.warn('[ResumeUpload] Mobile connection hiccup on attempt 1, re-authenticating & retrying in 1.5s...');
-                    setUploadStage('Reconnecting to server...');
-                    await api.get('/api/health').catch(() => {});
-                    await new Promise(r => setTimeout(r, 1500));
-                    return executeUpload(2);
+                console.warn('[ResumeUpload] Primary Axios attempt failed, falling back to native browser fetch:', err.message);
+                setUploadStage('Connecting via direct channel...');
+
+                const baseUrl = api.defaults.baseURL || 'https://ai-job-tracker-backend.onrender.com';
+                const token = getAuthToken();
+                const headers = {};
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
                 }
-                throw err;
+
+                const response = await fetch(`${baseUrl}/api/resumes`, {
+                    method: 'POST',
+                    headers,
+                    body: createFormData()
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    const msg = errData.message || errData.error || `Server responded with status ${response.status}`;
+                    const customErr = new Error(msg);
+                    customErr.response = { data: errData, status: response.status };
+                    throw customErr;
+                }
+
+                const resultData = await response.json();
+                return { data: resultData };
             }
         };
 

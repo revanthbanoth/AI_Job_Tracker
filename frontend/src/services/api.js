@@ -3,8 +3,7 @@ import axios from 'axios';
 // Create a centralized axios instance
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'https://ai-job-tracker-backend.onrender.com',
-    withCredentials: true,
-    timeout: 60000, // 60s timeout for mobile uploads
+    timeout: 90000, // 90s timeout for mobile uploads
 });
 
 // Add a request interceptor
