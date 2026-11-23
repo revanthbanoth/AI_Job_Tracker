@@ -11,6 +11,14 @@
  * - Footer: "JobTracker - Thoughtful Careers", Manage preferences & Unsubscribe (non-security only)
  */
 
+const getFrontendUrl = () => {
+    let url = (process.env.FRONTEND_URL || '').trim();
+    if (!url || url.includes('your-frontend-app') || url.includes('example.com')) {
+        url = 'https://ai-job-tracker-htng.onrender.com';
+    }
+    return url.split(',')[0].trim().replace(/\/$/, '');
+};
+
 const escapeHtml = (unsafe) => {
     if (unsafe == null) return '';
     return String(unsafe)
@@ -46,7 +54,7 @@ const renderEmailLayout = ({
     isSecurityEmail = false,
     unsubscribeToken = null,
 }) => {
-    const clientUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const clientUrl = getFrontendUrl();
     const preferencesUrl = `${clientUrl}/settings?tab=notifications${unsubscribeToken ? `&token=${unsubscribeToken}` : ''}`;
     const unsubscribeUrl = `${clientUrl}/unsubscribe?token=${unsubscribeToken || 'all'}`;
 
@@ -194,4 +202,5 @@ module.exports = {
     escapeHtml,
     getFirstName,
     renderEmailLayout,
+    getFrontendUrl,
 };

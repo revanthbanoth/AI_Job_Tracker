@@ -214,7 +214,8 @@ const forgotPassword = asyncHandler(async (req, res) => {
     user.resetPasswordExpire = Date.now() + 30 * 60 * 1000; // 30 minutes
     await user.save();
 
-    const frontendUrl = (process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',')[0].trim() : 'https://ai-job-tracker-htng.onrender.com').replace(/\/$/, '');
+    const { getFrontendUrl } = require('../utils/emailLayout');
+    const frontendUrl = getFrontendUrl();
     const resetLink = `${frontendUrl}/reset-password/${resetToken}`;
 
     let emailDelivered = false;

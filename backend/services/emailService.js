@@ -1,5 +1,5 @@
 const sendEmail = require('../utils/sendEmail');
-const { escapeHtml, getFirstName, renderEmailLayout } = require('../utils/emailLayout');
+const { escapeHtml, getFirstName, renderEmailLayout, getFrontendUrl } = require('../utils/emailLayout');
 const { generateIcsContent, generateGoogleCalendarUrl, generateOutlookCalendarUrl } = require('../utils/icsGenerator');
 
 /**
@@ -11,8 +11,8 @@ const { generateIcsContent, generateGoogleCalendarUrl, generateOutlookCalendarUr
  */
 class EmailService {
     constructor() {
-        this.clientUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-        this.supportEmail = process.env.SUPPORT_EMAIL || process.env.EMAIL_USER || 'support@jobtracker.com';
+        this.clientUrl = getFrontendUrl();
+        this.supportEmail = process.env.SUPPORT_EMAIL || process.env.EMAIL_USER || 'jobtrackerai.in@gmail.com';
     }
 
     /**
