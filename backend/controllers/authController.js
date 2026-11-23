@@ -447,20 +447,36 @@ const testEmailDelivery = asyncHandler(async (req, res) => {
     }
 
     try {
-        const result = await sendEmail({
-            to,
-            subject: 'AI Job Tracker - Live Email Verification',
-            text: `Hello! This is a test email confirming that your JobTracker email service is properly configured and actively delivering real emails from Render.\n\nSent at: ${new Date().toISOString()}`,
-            html: `<div style="font-family: Arial, sans-serif; padding: 20px; background: #FAF6F0; border-radius: 8px;">
-                <h2 style="color: #1F1B16; font-family: Georgia, serif;">JobTracker Email Delivery Active</h2>
-                <p style="color: #1F1B16; font-size: 14px;">This email confirms that your live email delivery is functioning correctly on Render.</p>
-                <p style="color: #8C827A; font-size: 12px;">Sent at: ${new Date().toISOString()}</p>
-            </div>`
-        });
+        const emailService = require('../services/emailService');
+        const mockUser = {
+            name: to.split('@')[0],
+            email: to,
+            unsubscribeToken: 'sample_token'
+        };
+
+        let result;
+        const type = (req.query.type || 'weekly').toLowerCase();
+
+        if (type === 'welcome') {
+            result = await emailService.sendWelcomeEmail(mockUser);
+        } else if (type === 'reset') {
+            result = await emailService.sendPasswordResetEmail(mockUser, 'sample_reset_token_123');
+        } else if (type === 'ats') {
+            result = await emailService.sendAtsReportReadyEmail(mockUser, { name: 'Senior_Engineer_Resume.pdf' }, { score: 88 });
+        } else {
+            result = await emailService.sendWeeklySummaryEmail(mockUser, {
+                sent: 4,
+                responses: 2,
+                interviews: 1,
+                goalPercent: 80,
+                encouragementLine: 'Strong momentum this week! Consistent high-match submissions drive results.',
+                aiSuggestion: 'Focus on 2 tailored applications with high ATS alignment and schedule 1 networking outreach.'
+            });
+        }
 
         res.status(200).json({
             success: true,
-            message: `Verification email sent successfully to ${to}`,
+            message: `Executive ${type} email sent successfully to ${to}`,
             details: result
         });
     } catch (err) {
