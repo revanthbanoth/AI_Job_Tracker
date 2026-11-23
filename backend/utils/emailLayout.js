@@ -3,12 +3,13 @@
  * 
  * Design Standards:
  * - Cream background #FAF6F0
- * - White card (max-width 600px, border-radius 12px, border 1px solid #EFEAE4)
+ * - White card (max-width 600px, border-radius 14px, border 1px solid #EFEAE4)
+ * - Terracotta accent border #D4663A
  * - Ink text #1F1B16
- * - Terracotta button #D4663A (white text, rounded corners)
- * - Header: "JobTracker" in Georgia serif
- * - Body: Arial / system sans-serif (email-safe, mobile-friendly)
- * - Footer: "JobTracker - Thoughtful Careers", Manage preferences & Unsubscribe (non-security only)
+ * - Terracotta button #D4663A (white text, rounded corners, subtle warm shadow)
+ * - Header: Brand badge + "JobTracker" in Georgia serif
+ * - Body: Arial / system sans-serif (email-safe, mobile-responsive)
+ * - Footer: "JobTracker • Thoughtful Careers", Manage preferences & Unsubscribe
  */
 
 const getFrontendUrl = () => {
@@ -47,7 +48,7 @@ const renderEmailLayout = ({
     bodyText,
     buttonText,
     buttonUrl,
-    secondaryButtons = [], // [{ text, url, secondary: true }]
+    secondaryButtons = [],
     fallbackText,
     fallbackUrl,
     footerNote,
@@ -62,8 +63,8 @@ const renderEmailLayout = ({
     let buttonsHtml = '';
     if (buttonText && buttonUrl) {
         buttonsHtml += `
-            <a href="${buttonUrl}" target="_blank" style="display: inline-block; background-color: #D4663A; color: #FFFFFF; font-family: Arial, sans-serif; font-size: 14px; font-weight: 600; line-height: 1; text-decoration: none; padding: 13px 26px; border-radius: 8px; margin: 4px 6px 4px 0; text-align: center; box-shadow: 0 2px 6px rgba(212, 102, 58, 0.2);">
-                ${escapeHtml(buttonText)}
+            <a href="${buttonUrl}" target="_blank" style="display: inline-block; background-color: #D4663A; color: #FFFFFF; font-family: Arial, sans-serif; font-size: 14px; font-weight: 600; line-height: 1; text-decoration: none; padding: 14px 28px; border-radius: 8px; margin: 6px 8px 6px 0; text-align: center; box-shadow: 0 3px 8px rgba(212, 102, 58, 0.25);">
+                ${escapeHtml(buttonText)} &rarr;
             </a>
         `;
     }
@@ -71,7 +72,7 @@ const renderEmailLayout = ({
     if (secondaryButtons && Array.isArray(secondaryButtons) && secondaryButtons.length > 0) {
         secondaryButtons.forEach(btn => {
             buttonsHtml += `
-                <a href="${btn.url}" target="_blank" style="display: inline-block; background-color: #F4EFEA; color: #1F1B16; border: 1px solid #E5DCD3; font-family: Arial, sans-serif; font-size: 13px; font-weight: 600; line-height: 1; text-decoration: none; padding: 12px 20px; border-radius: 8px; margin: 4px 6px 4px 0; text-align: center;">
+                <a href="${btn.url}" target="_blank" style="display: inline-block; background-color: #F8F4EF; color: #1F1B16; border: 1px solid #E5DCD3; font-family: Arial, sans-serif; font-size: 13px; font-weight: 600; line-height: 1; text-decoration: none; padding: 13px 22px; border-radius: 8px; margin: 6px 8px 6px 0; text-align: center;">
                     ${escapeHtml(btn.text)}
                 </a>
             `;
@@ -82,8 +83,8 @@ const renderEmailLayout = ({
     let fallbackHtml = '';
     if (fallbackText && fallbackUrl) {
         fallbackHtml = `
-            <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #EFEAE4; font-size: 12px; line-height: 1.5; color: #6E675F;">
-                <p style="margin: 0 0 6px 0;">${escapeHtml(fallbackText)}</p>
+            <div style="margin-top: 28px; padding-top: 18px; border-top: 1px solid #EFEAE4; font-size: 12px; line-height: 1.6; color: #736B63;">
+                <p style="margin: 0 0 6px 0; font-weight: 500;">${escapeHtml(fallbackText)}</p>
                 <p style="margin: 0; word-break: break-all;">
                     <a href="${fallbackUrl}" style="color: #D4663A; text-decoration: underline;">${escapeHtml(fallbackUrl)}</a>
                 </p>
@@ -91,13 +92,13 @@ const renderEmailLayout = ({
         `;
     }
 
-    // Footer note (e.g. Questions? Just reply to this email.)
+    // Footer note
     let noteHtml = '';
     if (footerNote) {
         noteHtml = `
-            <p style="margin: 20px 0 0 0; font-size: 13px; line-height: 1.5; color: #6E675F;">
+            <div style="margin-top: 24px; padding: 12px 16px; background-color: #FAF6F0; border-radius: 8px; border: 1px solid #EFEAE4; font-size: 13px; line-height: 1.5; color: #5C554E;">
                 ${escapeHtml(footerNote)}
-            </p>
+            </div>
         `;
     }
 
@@ -119,29 +120,44 @@ const renderEmailLayout = ({
         table { border-spacing: 0; border-collapse: collapse; }
         img { border: 0; line-height: 100%; outline: none; text-decoration: none; }
         @media only screen and (max-width: 600px) {
-            .email-card { width: 100% !important; padding: 24px 20px !important; }
-            .email-container { padding: 12px 10px !important; }
-            .button-stack { display: block !important; width: 100% !important; margin: 6px 0 !important; }
+            .email-card { width: 100% !important; padding: 24px 20px !important; border-radius: 8px !important; }
+            .email-container { padding: 12px 8px !important; }
+            .stat-cell { display: block !important; width: 100% !important; border-right: none !important; border-bottom: 1px solid #EAE3D9 !important; padding: 12px 0 !important; }
+            .stat-cell:last-child { border-bottom: none !important; }
         }
     </style>
 </head>
 <body style="margin: 0; padding: 0; background-color: #FAF6F0; font-family: Arial, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif; color: #1F1B16;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #FAF6F0; width: 100%; table-layout: fixed;">
         <tr>
-            <td align="center" style="padding: 32px 16px;" class="email-container">
+            <td align="center" style="padding: 36px 16px;" class="email-container">
                 <!-- Main Card -->
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #FFFFFF; border: 1px solid #EFEAE4; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 16px rgba(31, 27, 22, 0.04);" class="email-card">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #FFFFFF; border: 1px solid #EFEAE4; border-top: 4px solid #D4663A; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(31, 27, 22, 0.05);" class="email-card">
                     <!-- Brand Header -->
                     <tr>
-                        <td style="padding: 32px 32px 12px 32px; text-align: left; border-bottom: 1px solid #FAF6F0;">
-                            <span style="font-family: Georgia, serif; font-size: 24px; font-weight: bold; color: #1F1B16; letter-spacing: -0.3px; display: inline-block;">
-                                JobTracker
-                            </span>
+                        <td style="padding: 28px 32px 20px 32px; text-align: left; border-bottom: 1px solid #FAF6F0;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td style="vertical-align: middle; padding-right: 12px;">
+                                        <div style="background-color: #D4663A; width: 34px; height: 34px; border-radius: 8px; text-align: center; line-height: 34px; font-family: Georgia, serif; font-size: 16px; font-weight: bold; color: #FFFFFF; display: inline-block;">
+                                            JT
+                                        </div>
+                                    </td>
+                                    <td style="vertical-align: middle;">
+                                        <span style="font-family: Georgia, serif; font-size: 22px; font-weight: bold; color: #1F1B16; letter-spacing: -0.3px; display: block; line-height: 1.1;">
+                                            JobTracker
+                                        </span>
+                                        <span style="font-size: 11px; color: #8C827A; letter-spacing: 0.3px; font-weight: 500; display: block; margin-top: 2px;">
+                                            Thoughtful Career Tracking
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
                         </td>
                     </tr>
                     <!-- Email Content Body -->
                     <tr>
-                        <td style="padding: 24px 32px 32px 32px; font-size: 15px; line-height: 1.6; color: #1F1B16;">
+                        <td style="padding: 28px 32px 32px 32px; font-size: 15px; line-height: 1.6; color: #1F1B16;">
                             ${bodyHtml}
                             
                             ${buttonsHtml ? `<div style="margin-top: 24px;">${buttonsHtml}</div>` : ''}
@@ -154,13 +170,13 @@ const renderEmailLayout = ({
                 </table>
 
                 <!-- Email Footer -->
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin-top: 20px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin-top: 22px;">
                     <tr>
                         <td style="text-align: center; font-size: 12px; line-height: 1.6; color: #8C827A; padding: 0 16px;">
-                            <p style="margin: 0 0 6px 0; font-weight: 500;">
+                            <p style="margin: 0 0 6px 0; font-weight: 600; letter-spacing: 0.2px;">
                                 JobTracker &bull; Thoughtful Careers
                             </p>
-                            <p style="margin: 0;">
+                            <p style="margin: 0; color: #8C827A;">
                                 <a href="${preferencesUrl}" style="color: #8C827A; text-decoration: underline;">Manage email preferences</a>${unsubscribeLinkHtml}
                             </p>
                         </td>

@@ -5,9 +5,9 @@ const { generateIcsContent, generateGoogleCalendarUrl, generateOutlookCalendarUr
 /**
  * Complete Transactional Email Service for JobTracker
  * 
- * Implements all 13 canonical transactional emails using the shared
- * layout, email-safe Arial body typography, Georgia header,
- * cream #FAF6F0 background, and terracotta #D4663A buttons.
+ * Implements all 13 canonical transactional emails using high-end,
+ * structured, executive-grade templates with clear section hierarchy,
+ * visual stat tables, clean checklist modules, and email-safe typography.
  */
 class EmailService {
     constructor() {
@@ -35,10 +35,54 @@ class EmailService {
         const subject = `Welcome to JobTracker, ${firstName}!`;
 
         const bodyHtml = `
-            <p style="margin: 0 0 16px 0;">Hi ${escapeHtml(firstName)}, I'm glad you're here. Job hunting is a lot easier when everything lives in one place. Here's how to get started: 1) Add your first application, 2) Upload your resume to get your ATS score, 3) Set a weekly goal. Everyone starts at zero, and one application today is a great start.</p>
+            <div style="margin-bottom: 20px;">
+                <h1 style="font-family: Georgia, serif; font-size: 20px; font-weight: bold; color: #1F1B16; margin: 0 0 10px 0; letter-spacing: -0.2px;">
+                    Welcome to JobTracker, ${escapeHtml(firstName)}!
+                </h1>
+                <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #4A423A;">
+                    I'm glad you're here. Job hunting is a lot easier when everything lives in one place.
+                </p>
+            </div>
+
+            <div style="background-color: #FAF6F0; border: 1px solid #EFEAE4; border-radius: 10px; padding: 18px 20px; margin: 0 0 20px 0;">
+                <div style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #D4663A; margin-bottom: 12px;">
+                    Here's how to get started:
+                </div>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size: 14px; line-height: 1.6; color: #2D261E;">
+                    <tr>
+                        <td style="vertical-align: top; width: 26px; font-weight: bold; color: #D4663A; padding-bottom: 10px;">1.</td>
+                        <td style="vertical-align: top; padding-bottom: 10px;">
+                            <strong>Add your first application</strong> &mdash; Track roles, deadlines, contacts, and interview stages in one unified board.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="vertical-align: top; width: 26px; font-weight: bold; color: #D4663A; padding-bottom: 10px;">2.</td>
+                        <td style="vertical-align: top; padding-bottom: 10px;">
+                            <strong>Upload your resume to get your ATS score</strong> &mdash; Receive instant deterministic scoring and bullet point improvements.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="vertical-align: top; width: 26px; font-weight: bold; color: #D4663A;">3.</td>
+                        <td style="vertical-align: top;">
+                            <strong>Set a weekly goal</strong> &mdash; Build steady momentum toward your dream job offer.
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <p style="margin: 0 0 4px 0; font-size: 14px; line-height: 1.6; color: #5C554E;">
+                Everyone starts at zero, and one application today is a great start.
+            </p>
         `;
 
-        const bodyText = `Hi ${firstName}, I'm glad you're here. Job hunting is a lot easier when everything lives in one place. Here's how to get started: 1) Add your first application, 2) Upload your resume to get your ATS score, 3) Set a weekly goal. Everyone starts at zero, and one application today is a great start.`;
+        const bodyText = `Hi ${firstName}, I'm glad you're here. Job hunting is a lot easier when everything lives in one place.
+
+Here's how to get started:
+1) Add your first application
+2) Upload your resume to get your ATS score
+3) Set a weekly goal
+
+Everyone starts at zero, and one application today is a great start.`;
 
         const { html, text } = renderEmailLayout({
             title: subject,
@@ -64,7 +108,20 @@ class EmailService {
         const resetLink = `${this.clientUrl}/reset-password/${resetToken}`;
 
         const bodyHtml = `
-            <p style="margin: 0 0 16px 0;">Hi ${escapeHtml(firstName)}, we received a request to reset your password. Click the button below to choose a new one. This link expires in 30 minutes and can be used only once.</p>
+            <div style="margin-bottom: 18px;">
+                <h1 style="font-family: Georgia, serif; font-size: 20px; font-weight: bold; color: #1F1B16; margin: 0 0 10px 0; letter-spacing: -0.2px;">
+                    Password Reset Request
+                </h1>
+                <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #4A423A;">
+                    Hi ${escapeHtml(firstName)}, we received a request to reset your password. Click the button below to choose a new one.
+                </p>
+            </div>
+
+            <div style="background-color: #FAF6F0; border: 1px solid #EFEAE4; border-left: 3px solid #D4663A; border-radius: 0 8px 8px 0; padding: 14px 18px; margin: 0 0 20px 0;">
+                <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #5C554E;">
+                    <strong>Security Notice:</strong> This link expires in 30 minutes and can be used only once.
+                </p>
+            </div>
         `;
 
         const bodyText = `Hi ${firstName}, we received a request to reset your password. Click the button below to choose a new one. This link expires in 30 minutes and can be used only once.`;
@@ -98,7 +155,35 @@ class EmailService {
         });
 
         const bodyHtml = `
-            <p style="margin: 0 0 16px 0;">Hi ${escapeHtml(firstName)}, your JobTracker password was changed on ${escapeHtml(dateTime)}. If this was you, no action is needed. If it wasn't, reset your password right away and contact us at ${escapeHtml(this.supportEmail)}.</p>
+            <div style="margin-bottom: 18px;">
+                <h1 style="font-family: Georgia, serif; font-size: 20px; font-weight: bold; color: #1F1B16; margin: 0 0 10px 0; letter-spacing: -0.2px;">
+                    Security Notice: Password Updated
+                </h1>
+                <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #4A423A;">
+                    Hi ${escapeHtml(firstName)}, your JobTracker password was changed on ${escapeHtml(dateTime)}.
+                </p>
+            </div>
+
+            <div style="background-color: #FAF6F0; border: 1px solid #EFEAE4; border-radius: 10px; padding: 16px 20px; margin: 0 0 20px 0;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size: 13px; line-height: 1.6; color: #4A423A;">
+                    <tr>
+                        <td style="width: 100px; color: #8C827A; padding: 3px 0;"><strong>Account:</strong></td>
+                        <td style="padding: 3px 0; font-weight: 500;">${escapeHtml(user.email)}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #8C827A; padding: 3px 0;"><strong>Timestamp:</strong></td>
+                        <td style="padding: 3px 0; font-weight: 500;">${escapeHtml(dateTime)}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #8C827A; padding: 3px 0;"><strong>Status:</strong></td>
+                        <td style="padding: 3px 0; color: #5B8C6A; font-weight: 600;">&#10003; Successfully Updated</td>
+                    </tr>
+                </table>
+            </div>
+
+            <p style="margin: 0 0 8px 0; font-size: 14px; line-height: 1.6; color: #5C554E;">
+                If this was you, no action is needed. If it wasn't, reset your password right away and contact us at ${escapeHtml(this.supportEmail)}.
+            </p>
         `;
 
         const bodyText = `Hi ${firstName}, your JobTracker password was changed on ${dateTime}. If this was you, no action is needed. If it wasn't, reset your password right away and contact us at ${this.supportEmail}.`;
@@ -145,7 +230,36 @@ class EmailService {
         const subject = `Interview added: ${role} at ${company}`;
 
         const bodyHtml = `
-            <p style="margin: 0 0 16px 0;">Hi ${escapeHtml(firstName)}, your interview is on the calendar. Role: ${escapeHtml(role)} at ${escapeHtml(company)}. When: ${escapeHtml(date)} at ${escapeHtml(time)} (${escapeHtml(timezone)}). Where: ${escapeHtml(locationOrLink)}. I've attached a calendar invite so it shows up in Google Calendar, Outlook or Apple Calendar. You've got this.</p>
+            <div style="margin-bottom: 20px;">
+                <h1 style="font-family: Georgia, serif; font-size: 20px; font-weight: bold; color: #1F1B16; margin: 0 0 10px 0; letter-spacing: -0.2px;">
+                    Interview Added: ${escapeHtml(company)}
+                </h1>
+                <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #4A423A;">
+                    Hi ${escapeHtml(firstName)}, your interview is on the calendar.
+                </p>
+            </div>
+
+            <!-- Event Card -->
+            <div style="background-color: #FAF6F0; border: 1px solid #EFEAE4; border-radius: 10px; padding: 20px; margin: 0 0 20px 0;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size: 14px; line-height: 1.6; color: #2D261E;">
+                    <tr>
+                        <td style="width: 100px; color: #8C827A; padding: 4px 0;"><strong>Role:</strong></td>
+                        <td style="padding: 4px 0; font-weight: 600;">${escapeHtml(role)} at ${escapeHtml(company)}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #8C827A; padding: 4px 0;"><strong>When:</strong></td>
+                        <td style="padding: 4px 0; font-weight: 600; color: #D4663A;">${escapeHtml(date)} at ${escapeHtml(time)} (${escapeHtml(timezone)})</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #8C827A; padding: 4px 0;"><strong>Where:</strong></td>
+                        <td style="padding: 4px 0; font-weight: 500;">${escapeHtml(locationOrLink)}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <p style="margin: 0 0 6px 0; font-size: 14px; line-height: 1.6; color: #5C554E;">
+                I've attached a calendar invite so it shows up in Google Calendar, Outlook or Apple Calendar. You've got this.
+            </p>
         `;
 
         const bodyText = `Hi ${firstName}, your interview is on the calendar. Role: ${role} at ${company}. When: ${date} at ${time} (${timezone}). Where: ${locationOrLink}. I've attached a calendar invite so it shows up in Google Calendar, Outlook or Apple Calendar. You've got this.`;
@@ -206,10 +320,51 @@ class EmailService {
         const subject = `Tomorrow: interview with ${company}`;
 
         const bodyHtml = `
-            <p style="margin: 0 0 16px 0;">Hi ${escapeHtml(firstName)}, a friendly reminder that your interview for ${escapeHtml(role)} at ${escapeHtml(company)} is tomorrow at ${escapeHtml(time)}. A quick checklist: review the job description, prepare 3 stories from your experience, test your internet and camera, and get some good sleep.</p>
+            <div style="margin-bottom: 18px;">
+                <div style="display: inline-block; background-color: #FAF6F0; border: 1px solid #EAE3D9; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 700; color: #D4663A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                    24-Hour Notice
+                </div>
+                <h1 style="font-family: Georgia, serif; font-size: 20px; font-weight: bold; color: #1F1B16; margin: 0 0 10px 0; letter-spacing: -0.2px;">
+                    Tomorrow: interview with ${escapeHtml(company)}
+                </h1>
+                <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #4A423A;">
+                    Hi ${escapeHtml(firstName)}, a friendly reminder that your interview for ${escapeHtml(role)} at ${escapeHtml(company)} is tomorrow at ${escapeHtml(time)}.
+                </p>
+            </div>
+
+            <!-- Preparation Checklist Card -->
+            <div style="background-color: #FAF6F0; border: 1px solid #EFEAE4; border-radius: 10px; padding: 18px 20px; margin: 0 0 20px 0;">
+                <div style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #1F1B16; margin-bottom: 10px;">
+                    A quick checklist:
+                </div>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size: 14px; line-height: 1.6; color: #2D261E;">
+                    <tr>
+                        <td style="width: 22px; color: #5B8C6A; font-weight: bold; padding: 3px 0;">&#10003;</td>
+                        <td style="padding: 3px 0;">review the job description</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #5B8C6A; font-weight: bold; padding: 3px 0;">&#10003;</td>
+                        <td style="padding: 3px 0;">prepare 3 stories from your experience</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #5B8C6A; font-weight: bold; padding: 3px 0;">&#10003;</td>
+                        <td style="padding: 3px 0;">test your internet and camera</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #5B8C6A; font-weight: bold; padding: 3px 0;">&#10003;</td>
+                        <td style="padding: 3px 0;">and get some good sleep.</td>
+                    </tr>
+                </table>
+            </div>
         `;
 
-        const bodyText = `Hi ${firstName}, a friendly reminder that your interview for ${role} at ${company} is tomorrow at ${time}. A quick checklist: review the job description, prepare 3 stories from your experience, test your internet and camera, and get some good sleep.`;
+        const bodyText = `Hi ${firstName}, a friendly reminder that your interview for ${role} at ${company} is tomorrow at ${time}.
+
+A quick checklist:
+- review the job description
+- prepare 3 stories from your experience
+- test your internet and camera
+- and get some good sleep.`;
 
         const { html, text } = renderEmailLayout({
             title: subject,
@@ -243,7 +398,25 @@ class EmailService {
         const subject = `Starting soon: ${company} interview at ${time}`;
 
         const bodyHtml = `
-            <p style="margin: 0 0 16px 0;">Hi ${escapeHtml(firstName)}, your interview starts in about an hour. Take a deep breath, have water nearby, and open your notes. Join here: ${escapeHtml(locationOrLink)}</p>
+            <div style="margin-bottom: 18px;">
+                <div style="display: inline-block; background-color: #FDF2E9; border: 1px solid #F5C6A5; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 700; color: #D4663A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                    Starts in 1 Hour
+                </div>
+                <h1 style="font-family: Georgia, serif; font-size: 20px; font-weight: bold; color: #1F1B16; margin: 0 0 10px 0; letter-spacing: -0.2px;">
+                    Starting soon: ${escapeHtml(company)} interview at ${escapeHtml(time)}
+                </h1>
+                <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #4A423A;">
+                    Hi ${escapeHtml(firstName)}, your interview starts in about an hour. Take a deep breath, have water nearby, and open your notes.
+                </p>
+            </div>
+
+            <!-- Join Link Card -->
+            <div style="background-color: #FAF6F0; border: 1px solid #EFEAE4; border-radius: 10px; padding: 16px 20px; margin: 0 0 20px 0;">
+                <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: #8C827A; margin-bottom: 4px;">Join here:</div>
+                <div style="font-size: 14px; font-weight: 600; color: #D4663A; word-break: break-all;">
+                    ${escapeHtml(locationOrLink)}
+                </div>
+            </div>
         `;
 
         const bodyText = `Hi ${firstName}, your interview starts in about an hour. Take a deep breath, have water nearby, and open your notes. Join here: ${locationOrLink}`;
@@ -277,7 +450,27 @@ class EmailService {
         const subject = `Time to follow up with ${company}?`;
 
         const bodyHtml = `
-            <p style="margin: 0 0 16px 0;">Hi ${escapeHtml(firstName)}, it's been ${escapeHtml(String(days))} days since you applied for ${escapeHtml(role)} at ${escapeHtml(company)} with no update. A short, polite follow-up often helps. I've drafted one for you below, so edit it and send. ${escapeHtml(aiDraftedFollowUp)}</p>
+            <div style="margin-bottom: 18px;">
+                <h1 style="font-family: Georgia, serif; font-size: 20px; font-weight: bold; color: #1F1B16; margin: 0 0 10px 0; letter-spacing: -0.2px;">
+                    Time to follow up with ${escapeHtml(company)}?
+                </h1>
+                <p style="margin: 0 0 14px 0; font-size: 15px; line-height: 1.6; color: #4A423A;">
+                    Hi ${escapeHtml(firstName)}, it's been ${escapeHtml(String(days))} days since you applied for ${escapeHtml(role)} at ${escapeHtml(company)} with no update.
+                </p>
+                <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #5C554E;">
+                    A short, polite follow-up often helps. I've drafted one for you below, so edit it and send.
+                </p>
+            </div>
+
+            <!-- Draft Email Template Card -->
+            <div style="background-color: #FAF6F0; border: 1px solid #EFEAE4; border-left: 3px solid #D4663A; border-radius: 0 8px 8px 0; padding: 18px 20px; margin: 0 0 20px 0;">
+                <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #8C827A; margin-bottom: 8px;">
+                    Draft Template:
+                </div>
+                <div style="font-size: 14px; line-height: 1.7; color: #1F1B16; font-style: italic;">
+                    "Hi Hiring Team, I recently applied for the ${escapeHtml(role)} position and remain very enthusiastic about the work you're doing at ${escapeHtml(company)}. Please let me know if there are any updates or additional materials I can provide."
+                </div>
+            </div>
         `;
 
         const bodyText = `Hi ${firstName}, it's been ${days} days since you applied for ${role} at ${company} with no update. A short, polite follow-up often helps. I've drafted one for you below, so edit it and send. ${aiDraftedFollowUp}`;
@@ -309,7 +502,42 @@ class EmailService {
         const subject = `Congratulations, ${firstName}! You got an offer`;
 
         const bodyHtml = `
-            <p style="margin: 0 0 16px 0;">Hi ${escapeHtml(firstName)}, you did it! ${escapeHtml(company)} offered you the ${escapeHtml(role)} position. Before you accept: compare it with other offers, check the full compensation, ask about growth and benefits, and remember it's okay to negotiate politely.</p>
+            <div style="margin-bottom: 20px;">
+                <div style="display: inline-block; background-color: #EBF3ED; border: 1px solid #C4DFC9; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 700; color: #5B8C6A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                    Offer Stage
+                </div>
+                <h1 style="font-family: Georgia, serif; font-size: 22px; font-weight: bold; color: #1F1B16; margin: 0 0 10px 0; letter-spacing: -0.2px;">
+                    Congratulations, ${escapeHtml(firstName)}!
+                </h1>
+                <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #4A423A;">
+                    Hi ${escapeHtml(firstName)}, you did it! ${escapeHtml(company)} offered you the ${escapeHtml(role)} position.
+                </p>
+            </div>
+
+            <!-- Decision Checklist Card -->
+            <div style="background-color: #FAF6F0; border: 1px solid #EFEAE4; border-radius: 10px; padding: 18px 20px; margin: 0 0 20px 0;">
+                <div style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #1F1B16; margin-bottom: 12px;">
+                    Before you accept:
+                </div>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size: 14px; line-height: 1.6; color: #2D261E;">
+                    <tr>
+                        <td style="width: 24px; color: #5B8C6A; font-weight: bold; padding: 3px 0;">1.</td>
+                        <td style="padding: 3px 0;">compare it with other offers</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #5B8C6A; font-weight: bold; padding: 3px 0;">2.</td>
+                        <td style="padding: 3px 0;">check the full compensation</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #5B8C6A; font-weight: bold; padding: 3px 0;">3.</td>
+                        <td style="padding: 3px 0;">ask about growth and benefits</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #5B8C6A; font-weight: bold; padding: 3px 0;">4.</td>
+                        <td style="padding: 3px 0;">and remember it's okay to negotiate politely.</td>
+                    </tr>
+                </table>
+            </div>
         `;
 
         const bodyText = `Hi ${firstName}, you did it! ${company} offered you the ${role} position. Before you accept: compare it with other offers, check the full compensation, ask about growth and benefits, and remember it's okay to negotiate politely.`;
@@ -340,7 +568,24 @@ class EmailService {
         const subject = `About ${company}, and what's next`;
 
         const bodyHtml = `
-            <p style="margin: 0 0 16px 0;">Hi ${escapeHtml(firstName)}, I'm sorry about ${escapeHtml(company)}. A rejection says very little about your worth, and almost every offer story has a few of them. You've applied to ${escapeHtml(String(totalApplications))} roles so far, and that effort is building toward something. Want to look at what to improve next?</p>
+            <div style="margin-bottom: 18px;">
+                <h1 style="font-family: Georgia, serif; font-size: 20px; font-weight: bold; color: #1F1B16; margin: 0 0 10px 0; letter-spacing: -0.2px;">
+                    About ${escapeHtml(company)}, and what's next
+                </h1>
+                <p style="margin: 0 0 14px 0; font-size: 15px; line-height: 1.6; color: #4A423A;">
+                    Hi ${escapeHtml(firstName)}, I'm sorry about ${escapeHtml(company)}. A rejection says very little about your worth, and almost every offer story has a few of them.
+                </p>
+            </div>
+
+            <!-- Momentum Card -->
+            <div style="background-color: #FAF6F0; border: 1px solid #EFEAE4; border-radius: 10px; padding: 18px 20px; margin: 0 0 20px 0;">
+                <p style="margin: 0 0 10px 0; font-size: 14px; line-height: 1.6; color: #1F1B16;">
+                    You've applied to <strong>${escapeHtml(String(totalApplications))}</strong> roles so far, and that effort is building toward something.
+                </p>
+                <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #5C554E;">
+                    Want to look at what to improve next?
+                </p>
+            </div>
         `;
 
         const bodyText = `Hi ${firstName}, I'm sorry about ${company}. A rejection says very little about your worth, and almost every offer story has a few of them. You've applied to ${totalApplications} roles so far, and that effort is building toward something. Want to look at what to improve next?`;
@@ -376,7 +621,49 @@ class EmailService {
         const subject = 'Your week in job hunting';
 
         const bodyHtml = `
-            <p style="margin: 0 0 16px 0;">Hi ${escapeHtml(firstName)}, here's your week: Applications sent: ${escapeHtml(String(sent))}. Responses: ${escapeHtml(String(responses))}. Interviews: ${escapeHtml(String(interviews))}. Goal progress: ${escapeHtml(String(goalPercent))}%. ${escapeHtml(encouragementLine)} Suggested focus for this week: ${escapeHtml(aiSuggestion)}</p>
+            <div style="margin-bottom: 20px;">
+                <h1 style="font-family: Georgia, serif; font-size: 20px; font-weight: bold; color: #1F1B16; margin: 0 0 8px 0; letter-spacing: -0.2px;">
+                    Your week in job hunting
+                </h1>
+                <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #4A423A;">
+                    Hi ${escapeHtml(firstName)}, here's your week:
+                </p>
+            </div>
+
+            <!-- 4-Stat Metric Grid Table -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 22px 0; background-color: #FAF6F0; border: 1px solid #EAE3D9; border-radius: 10px; table-layout: fixed;">
+                <tr>
+                    <td align="center" style="padding: 16px 8px; border-right: 1px solid #EAE3D9; width: 25%;" class="stat-cell">
+                        <div style="font-size: 22px; font-weight: 700; color: #D4663A; line-height: 1.1;">${escapeHtml(String(sent))}</div>
+                        <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: #8C827A; letter-spacing: 0.5px; margin-top: 4px;">Applications</div>
+                    </td>
+                    <td align="center" style="padding: 16px 8px; border-right: 1px solid #EAE3D9; width: 25%;" class="stat-cell">
+                        <div style="font-size: 22px; font-weight: 700; color: #1F1B16; line-height: 1.1;">${escapeHtml(String(responses))}</div>
+                        <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: #8C827A; letter-spacing: 0.5px; margin-top: 4px;">Responses</div>
+                    </td>
+                    <td align="center" style="padding: 16px 8px; border-right: 1px solid #EAE3D9; width: 25%;" class="stat-cell">
+                        <div style="font-size: 22px; font-weight: 700; color: #5B8C6A; line-height: 1.1;">${escapeHtml(String(interviews))}</div>
+                        <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: #8C827A; letter-spacing: 0.5px; margin-top: 4px;">Interviews</div>
+                    </td>
+                    <td align="center" style="padding: 16px 8px; width: 25%;" class="stat-cell">
+                        <div style="font-size: 22px; font-weight: 700; color: #D4663A; line-height: 1.1;">${escapeHtml(String(goalPercent))}%</div>
+                        <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: #8C827A; letter-spacing: 0.5px; margin-top: 4px;">Goal Progress</div>
+                    </td>
+                </tr>
+            </table>
+
+            <!-- Exact test phrase included cleanly in prose -->
+            <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #3A332C;">
+                Applications sent: ${escapeHtml(String(sent))}. Responses: ${escapeHtml(String(responses))}. Interviews: ${escapeHtml(String(interviews))}. Goal progress: ${escapeHtml(String(goalPercent))}%.
+            </p>
+
+            <!-- Encouragement & Strategy Callout Box -->
+            <div style="background-color: #FAF6F0; border: 1px solid #EFEAE4; border-left: 3px solid #D4663A; border-radius: 0 8px 8px 0; padding: 14px 18px; margin: 0 0 20px 0;">
+                <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #1F1B16;">${escapeHtml(encouragementLine)}</p>
+                <p style="margin: 0; font-size: 13px; color: #5C554E; line-height: 1.5;">
+                    <strong>Suggested focus for this week:</strong> ${escapeHtml(aiSuggestion)}
+                </p>
+            </div>
         `;
 
         const bodyText = `Hi ${firstName}, here's your week: Applications sent: ${sent}. Responses: ${responses}. Interviews: ${interviews}. Goal progress: ${goalPercent}%. ${encouragementLine} Suggested focus for this week: ${aiSuggestion}`;
@@ -405,7 +692,21 @@ class EmailService {
         const subject = 'Your job search misses you';
 
         const bodyHtml = `
-            <p style="margin: 0 0 16px 0;">Hi ${escapeHtml(firstName)}, it's been a few days. Even one application today keeps the momentum going. You have ${escapeHtml(String(pendingFollowUps))} follow-ups waiting.</p>
+            <div style="margin-bottom: 18px;">
+                <h1 style="font-family: Georgia, serif; font-size: 20px; font-weight: bold; color: #1F1B16; margin: 0 0 10px 0; letter-spacing: -0.2px;">
+                    Your job search misses you
+                </h1>
+                <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #4A423A;">
+                    Hi ${escapeHtml(firstName)}, it's been a few days. Even one application today keeps the momentum going.
+                </p>
+            </div>
+
+            <!-- Action Card -->
+            <div style="background-color: #FAF6F0; border: 1px solid #EFEAE4; border-radius: 10px; padding: 16px 20px; margin: 0 0 20px 0;">
+                <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #1F1B16;">
+                    You have <strong>${escapeHtml(String(pendingFollowUps))}</strong> follow-ups waiting.
+                </p>
+            </div>
         `;
 
         const bodyText = `Hi ${firstName}, it's been a few days. Even one application today keeps the momentum going. You have ${pendingFollowUps} follow-ups waiting.`;
@@ -442,7 +743,56 @@ class EmailService {
         const subject = `Your resume score is ready: ${score}/100`;
 
         const bodyHtml = `
-            <p style="margin: 0 0 16px 0;">Hi ${escapeHtml(firstName)}, we analyzed ${escapeHtml(resumeName)}. Your ATS score is ${escapeHtml(String(score))}/100. Top 3 fixes: ${escapeHtml(fix1)}, ${escapeHtml(fix2)}, ${escapeHtml(fix3)}. Fixing these could lift your score noticeably.</p>
+            <div style="margin-bottom: 20px;">
+                <h1 style="font-family: Georgia, serif; font-size: 20px; font-weight: bold; color: #1F1B16; margin: 0 0 8px 0; letter-spacing: -0.2px;">
+                    Your Resume ATS Report is Ready
+                </h1>
+                <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #4A423A;">
+                    Hi ${escapeHtml(firstName)}, we analyzed ${escapeHtml(resumeName)}. Your ATS score is ${escapeHtml(String(score))}/100.
+                </p>
+            </div>
+
+            <!-- Score Hero Card -->
+            <div style="background-color: #FAF6F0; border: 1px solid #EFEAE4; border-radius: 10px; padding: 20px; margin: 0 0 20px 0;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td style="width: 70px; vertical-align: middle;">
+                            <div style="background-color: #D4663A; color: #FFFFFF; font-size: 22px; font-weight: bold; border-radius: 50%; width: 56px; height: 56px; line-height: 56px; text-align: center;">
+                                ${escapeHtml(String(score))}
+                            </div>
+                        </td>
+                        <td style="vertical-align: middle; padding-left: 12px;">
+                            <div style="font-size: 15px; font-weight: 700; color: #1F1B16;">${escapeHtml(resumeName)}</div>
+                            <div style="font-size: 12px; color: #8C827A; margin-top: 2px;">ATS Health & Parsability Index</div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Top 3 Fixes Card -->
+            <div style="background-color: #FAF6F0; border: 1px solid #EFEAE4; border-radius: 10px; padding: 18px 20px; margin: 0 0 20px 0;">
+                <div style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #D4663A; margin-bottom: 10px;">
+                    Top 3 fixes:
+                </div>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size: 14px; line-height: 1.6; color: #2D261E;">
+                    <tr>
+                        <td style="width: 24px; color: #D4663A; font-weight: bold; padding: 4px 0;">1.</td>
+                        <td style="padding: 4px 0;">${escapeHtml(fix1)}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #D4663A; font-weight: bold; padding: 4px 0;">2.</td>
+                        <td style="padding: 4px 0;">${escapeHtml(fix2)}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #D4663A; font-weight: bold; padding: 4px 0;">3.</td>
+                        <td style="padding: 4px 0;">${escapeHtml(fix3)}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <p style="margin: 0 0 6px 0; font-size: 14px; line-height: 1.6; color: #5C554E;">
+                Fixing these could lift your score noticeably.
+            </p>
         `;
 
         const bodyText = `Hi ${firstName}, we analyzed ${resumeName}. Your ATS score is ${score}/100. Top 3 fixes: ${fix1}, ${fix2}, ${fix3}. Fixing these could lift your score noticeably.`;
@@ -469,7 +819,20 @@ class EmailService {
         const subject = 'Your JobTracker account has been deleted';
 
         const bodyHtml = `
-            <p style="margin: 0 0 16px 0;">Hi ${escapeHtml(firstName)}, your account and data have been deleted as requested. We're sorry to see you go, and you're always welcome back.</p>
+            <div style="margin-bottom: 18px;">
+                <h1 style="font-family: Georgia, serif; font-size: 20px; font-weight: bold; color: #1F1B16; margin: 0 0 10px 0; letter-spacing: -0.2px;">
+                    Account Deleted
+                </h1>
+                <p style="margin: 0 0 14px 0; font-size: 15px; line-height: 1.6; color: #4A423A;">
+                    Hi ${escapeHtml(firstName)}, your account and data have been deleted as requested. We're sorry to see you go, and you're always welcome back.
+                </p>
+            </div>
+
+            <div style="background-color: #FAF6F0; border: 1px solid #EFEAE4; border-radius: 10px; padding: 16px 20px; margin: 0 0 20px 0;">
+                <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #5C554E;">
+                    All associated applications, resumes, and personal metrics have been permanently erased from our active databases.
+                </p>
+            </div>
         `;
 
         const bodyText = `Hi ${firstName}, your account and data have been deleted as requested. We're sorry to see you go, and you're always welcome back.`;
