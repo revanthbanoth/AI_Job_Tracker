@@ -46,13 +46,38 @@ const getResumes = asyncHandler(async (req, res) => {
 // @route   POST /api/resumes
 // @access  Private
 const uploadResume = asyncHandler(async (req, res) => {
-    if (!req.file) {
+    if (!req.file || !req.file.buffer || req.file.buffer.length === 0) {
         res.status(400);
-        throw new Error('Please upload a file');
+        throw new Error('Please select a file to upload.');
+    }
+
+    if (req.file.size > 15 * 1024 * 1024) {
+        res.status(400);
+        throw new Error('File exceeds 10MB limit. Please upload a smaller document.');
+    }
+
+    // Inspect file buffer magic bytes:
+    // PDF starts with %PDF (0x25, 0x50, 0x44, 0x46)
+    // DOCX/ZIP starts with PK (0x50, 0x4B)
+    const isPdfMagic = req.file.buffer.slice(0, 4).toString() === '%PDF';
+    const isDocxMagic = req.file.buffer.slice(0, 2).toString() === 'PK';
+    const originalExt = path.extname(req.file.originalname || '').toLowerCase();
+    const isValidExt = ['.pdf', '.docx', '.doc', '.txt'].includes(originalExt);
+
+    if (!isPdfMagic && !isDocxMagic && !isValidExt) {
+        res.status(400);
+        throw new Error('Invalid file format. Please upload a valid PDF or Word document (.pdf, .docx, .doc).');
+    }
+
+    let cleanFileName = (req.file.originalname || 'resume.pdf')
+        .replace(/\s+/g, '_')
+        .replace(/[^a-zA-Z0-9_.-]/g, '');
+
+    if (!cleanFileName || cleanFileName === '.' || cleanFileName.startsWith('.')) {
+        cleanFileName = `resume_${Date.now()}${originalExt || (isPdfMagic ? '.pdf' : '.docx')}`;
     }
 
     let resumeUrl;
-    const cleanFileName = req.file.originalname.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_.-]/g, '');
 
     // Parse the document content and inspect for structural layout anomalies
     const parsedDoc = await parseDocument(req.file.buffer, req.file.mimetype, req.file.originalname);

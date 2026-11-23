@@ -34,30 +34,10 @@ const allowedOrigins = [...defaultOrigins, ...envOrigins];
 
 const corsOptions = {
     origin: (origin, callback) => {
-        if (
-            !origin ||
-            allowedOrigins.includes(origin) ||
-            origin.endsWith('.onrender.com') ||
-            origin.endsWith('.vercel.app') ||
-            origin.endsWith('.netlify.app')
-        ) {
-            callback(null, true);
-        } else {
-            // Allow all origins gracefully in production rather than throwing 500 error
-            callback(null, true);
-        }
+        // Reflect origin so all mobile clients and origins are permitted
+        callback(null, true);
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH', 'HEAD'],
-    allowedHeaders: [
-        'Content-Type',
-        'Authorization',
-        'Accept',
-        'X-Requested-With',
-        'Cache-Control',
-        'Pragma',
-        'Origin',
-        'Range'
-    ],
     credentials: true,
 };
 

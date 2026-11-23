@@ -120,11 +120,14 @@ const Resumes = () => {
         setUploading(true);
 
         const formData = new FormData();
-        formData.append('resume', selectedFile);
-        formData.append('name', selectedFile.name || 'resume.pdf');
+        const safeName = selectedFile.name || 'resume.pdf';
+        formData.append('resume', selectedFile, safeName);
+        formData.append('name', safeName);
 
         try {
-            const { data } = await api.post(`/api/resumes`, formData);
+            const { data } = await api.post(`/api/resumes`, formData, {
+                timeout: 90000, // 90s timeout for mobile data connections
+            });
 
             const newResume = {
                 id: data._id,
