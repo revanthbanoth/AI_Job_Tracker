@@ -7,6 +7,8 @@ const protect = asyncHandler(async (req, res, next) => {
 
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         token = req.headers.authorization.split(' ')[1];
+    } else if (req.cookies && (req.cookies.jwt || req.cookies.token)) {
+        token = req.cookies.jwt || req.cookies.token;
     } else if (req.query && req.query.token) {
         token = req.query.token;
     }

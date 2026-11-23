@@ -10,22 +10,23 @@ const api = axios.create({
 // Add a request interceptor
 api.interceptors.request.use(
     (config) => {
-        // 1. Try to get token from standalone key
-        let token = sessionStorage.getItem('token');
+        // 1. Try to get token from standalone key (sessionStorage or localStorage)
+        let token = sessionStorage.getItem('token') || localStorage.getItem('token');
 
         // 2. Fallback to userInfo object if not found
         if (!token) {
-            const userInfo = sessionStorage.getItem('userInfo');
-            if (userInfo) {
+            const rawUser = sessionStorage.getItem('userInfo') || localStorage.getItem('userInfo');
+            if (rawUser) {
                 try {
-                    const parsed = JSON.parse(userInfo);
+                    const parsed = JSON.parse(rawUser);
                     if (parsed && parsed.token) {
                         token = parsed.token;
-                        // Auto-fix: Store it separately for future
+                        // Auto-fix: Store it for future requests
                         sessionStorage.setItem('token', token);
+                        localStorage.setItem('token', token);
                     }
                 } catch (error) {
-                    console.error("Error parsing userInfo from sessionStorage", error);
+                    console.error("Error parsing userInfo from storage", error);
                 }
             }
         }

@@ -214,20 +214,29 @@ const forgotPassword = asyncHandler(async (req, res) => {
     user.resetPasswordExpire = Date.now() + 30 * 60 * 1000; // 30 minutes
     await user.save();
 
+    const frontendUrl = (process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',')[0].trim() : 'https://ai-job-tracker-htng.onrender.com').replace(/\/$/, '');
+    const resetLink = `${frontendUrl}/reset-password/${resetToken}`;
+
+    let emailDelivered = false;
+    let emailWarning = null;
+
     try {
         await emailService.sendPasswordResetEmail(user, resetToken);
+        emailDelivered = true;
     } catch (emailErr) {
-        console.error('[forgotPassword] Error sending email:', emailErr);
-        user.resetPasswordToken = null;
-        user.resetPasswordExpire = null;
-        await user.save();
-        res.status(500);
-        throw new Error('Failed to send password reset email. Please try again later.');
+        console.warn('[forgotPassword] Email delivery notice:', emailErr.message);
+        emailWarning = emailErr.message;
+        // Keep user.resetPasswordToken intact for 30 minutes so the user is never locked out
     }
 
     res.status(200).json({
         success: true,
-        message: 'Password reset instructions have been sent to your email address.',
+        message: emailDelivered
+            ? 'Password reset instructions have been sent to your email address.'
+            : 'Password reset link generated. If you do not see the email, you can use the direct link below.',
+        emailDelivered,
+        resetLink,
+        emailWarning: emailWarning || undefined
     });
 });
 
@@ -416,16 +425,18 @@ const deleteAccount = asyncHandler(async (req, res) => {
 const testEmailDelivery = asyncHandler(async (req, res) => {
     const sendEmail = require('../utils/sendEmail');
     const to = req.query.to || process.env.EMAIL_USER || 'brevanth50@gmail.com';
+    const hasGoogleScript = Boolean(process.env.GOOGLE_SCRIPT_URL);
     const hasResend = Boolean(process.env.RESEND_API_KEY);
     const hasBrevo = Boolean(process.env.BREVO_API_KEY);
     const hasUser = Boolean(process.env.EMAIL_USER);
     const hasPass = Boolean(process.env.EMAIL_PASS);
 
-    if (!hasResend && !hasBrevo && (!hasUser || !hasPass)) {
+    if (!hasGoogleScript && !hasResend && !hasBrevo && (!hasUser || !hasPass)) {
         return res.status(400).json({
             success: false,
-            error: 'Missing email configuration. Render Free Tier blocks outbound SMTP (ports 465/587). To send emails for free on Render, add RESEND_API_KEY (from resend.com) to your Render environment variables.',
+            error: 'Missing email configuration. Render Free Tier blocks outbound SMTP (ports 465/587). To send emails for free on Render to any address without a domain, set GOOGLE_SCRIPT_URL or add RESEND_API_KEY.',
             config: {
+                hasGoogleScript,
                 hasResend,
                 hasBrevo,
                 hasEmailUser: hasUser,

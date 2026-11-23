@@ -3,14 +3,55 @@ const axios = require('axios');
 
 /**
  * Send an email using:
- * 1. Resend HTTP REST API (HTTPS Port 443 - Bypasses Render free-tier SMTP blocks)
- * 2. Brevo HTTP REST API (HTTPS Port 443 - Bypasses Render free-tier SMTP blocks)
- * 3. Traditional SMTP (Gmail / Custom SMTP) - for localhost or paid cloud plans
- * 4. Development test fallback (Ethereal / simulation)
+ * 1. Google Apps Script Webhook (HTTPS Port 443 - Direct Gmail delivery to ANY recipient with NO custom domain)
+ * 2. Resend HTTP REST API (HTTPS Port 443 - High deliverability on custom domains / owner sandbox)
+ * 3. Brevo HTTP REST API (HTTPS Port 443 - Bypasses Render free-tier SMTP blocks)
+ * 4. Traditional SMTP (Gmail / Custom SMTP) - for localhost or paid cloud plans
+ * 5. Development test fallback (Ethereal / simulation)
  */
 const sendEmail = async ({ to, subject, html, text, attachments }) => {
     // -------------------------------------------------------------------------
-    // OPTION 1: Resend HTTP REST API (HTTPS Port 443 - Works 100% on Render Free)
+    // OPTION 1: Google Apps Script Webhook (Port 443 HTTPS - Direct Gmail delivery)
+    // -------------------------------------------------------------------------
+    if (process.env.GOOGLE_SCRIPT_URL) {
+        try {
+            const cleanUrl = process.env.GOOGLE_SCRIPT_URL.trim();
+            const recipientEmail = Array.isArray(to) ? to[0] : to;
+
+            const payload = {
+                to: recipientEmail,
+                subject,
+                html,
+                text,
+                from: process.env.EMAIL_USER || 'jobtrackerai.in@gmail.com'
+            };
+
+            const response = await axios.post(cleanUrl, payload, {
+                headers: { 'Content-Type': 'application/json' },
+                timeout: 15000,
+            });
+
+            if (response.data && response.data.success === false) {
+                throw new Error(response.data.error || 'Google Script delivery error');
+            }
+
+            return {
+                success: true,
+                messageId: `gas_${Date.now()}`,
+                provider: 'google-script',
+                sender: process.env.EMAIL_USER || 'jobtrackerai.in@gmail.com'
+            };
+        } catch (gasErr) {
+            console.error('[sendEmail Google Script Notice]:', gasErr.message);
+            // Fall through to other options if configured
+            if (!process.env.RESEND_API_KEY && !process.env.BREVO_API_KEY && !process.env.EMAIL_PASS) {
+                throw new Error(`Google Apps Script Error: ${gasErr.message}`);
+            }
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // OPTION 2: Resend HTTP REST API (HTTPS Port 443 - Works 100% on Render Free)
     // -------------------------------------------------------------------------
     if (process.env.RESEND_API_KEY) {
         try {

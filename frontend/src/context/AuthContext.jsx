@@ -11,12 +11,8 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         const verifyToken = async () => {
-            // Cleanup legacy localStorage tokens to ensure strict session security
-            localStorage.removeItem('token');
-            localStorage.removeItem('userInfo');
-
             setLoading(true);
-            const token = sessionStorage.getItem('token');
+            const token = sessionStorage.getItem('token') || localStorage.getItem('token');
 
             if (!token) {
                 setLoading(false);
@@ -32,12 +28,17 @@ export const AuthProvider = ({ children }) => {
                 const validUser = { ...data, token };
                 setUser(validUser);
                 sessionStorage.setItem('userInfo', JSON.stringify(validUser));
+                sessionStorage.setItem('token', token);
+                localStorage.setItem('userInfo', JSON.stringify(validUser));
+                localStorage.setItem('token', token);
             } catch (error) {
                 console.error("Token verification failed:", error);
                 // Token invalid/expired -> Clear everything
                 setUser(null);
                 sessionStorage.removeItem('token');
                 sessionStorage.removeItem('userInfo');
+                localStorage.removeItem('token');
+                localStorage.removeItem('userInfo');
             } finally {
                 setLoading(false);
             }
@@ -46,13 +47,13 @@ export const AuthProvider = ({ children }) => {
         verifyToken();
     }, []);
 
-
-
     const login = async (email, password) => {
         try {
             const { data } = await api.post(`/api/auth/login`, { email, password });
             sessionStorage.setItem('userInfo', JSON.stringify(data));
             sessionStorage.setItem('token', data.token);
+            localStorage.setItem('userInfo', JSON.stringify(data));
+            localStorage.setItem('token', data.token);
             setUser(data);
             return data;
         } catch (error) {
@@ -66,19 +67,23 @@ export const AuthProvider = ({ children }) => {
             const { data } = await api.post(`/api/auth/register`, { name, email, password });
             sessionStorage.setItem('userInfo', JSON.stringify(data));
             sessionStorage.setItem('token', data.token);
+            localStorage.setItem('userInfo', JSON.stringify(data));
+            localStorage.setItem('token', data.token);
             setUser(data);
             return data;
         } catch (error) {
             console.error(error);
             throw error;
         }
-    }
+    };
 
     const logout = async () => {
         try {
             await api.post(`/api/auth/logout`);
             sessionStorage.removeItem('userInfo');
             sessionStorage.removeItem('token');
+            localStorage.removeItem('userInfo');
+            localStorage.removeItem('token');
             setUser(null);
         } catch (error) {
             console.error(error);

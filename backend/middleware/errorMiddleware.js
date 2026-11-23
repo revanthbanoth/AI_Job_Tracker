@@ -5,6 +5,13 @@ const notFound = (req, res, next) => {
 };
 
 const errorHandler = (err, req, res, next) => {
+    // Ensure CORS headers are attached to all error responses so mobile browsers don't mask errors as 'Network Error'
+    const origin = req.headers.origin;
+    if (origin) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+    }
+
     let statusCode = res.statusCode === 200 ? 500 : res.statusCode;
     let message = typeof err === 'string' ? err : (err.message || 'Server Error');
 

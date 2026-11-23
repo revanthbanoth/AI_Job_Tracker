@@ -95,20 +95,33 @@ const Resumes = () => {
 
     const handleFileSelect = (e) => {
         const file = e.target.files[0];
-        if (file) {
-            setSelectedFile(file);
+        if (!file) return;
+
+        // Prevent uploading massive files that exceed Render/Cloudflare upload limits
+        if (file.size > 10 * 1024 * 1024) {
+            alert(`File size is ${(file.size / 1024 / 1024).toFixed(1)}MB. Maximum allowed resume size is 10MB. Please choose a smaller file.`);
+            e.target.value = '';
+            setSelectedFile(null);
+            return;
         }
+
+        setSelectedFile(file);
     };
 
     const handleUpload = async (e) => {
         e.preventDefault();
         if (!selectedFile) return;
 
+        if (selectedFile.size > 10 * 1024 * 1024) {
+            alert('File exceeds 10MB limit. Please select a smaller file.');
+            return;
+        }
+
         setUploading(true);
 
         const formData = new FormData();
         formData.append('resume', selectedFile);
-        formData.append('name', selectedFile.name);
+        formData.append('name', selectedFile.name || 'resume.pdf');
 
         try {
             const { data } = await api.post(`/api/resumes`, formData);

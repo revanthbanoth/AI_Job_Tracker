@@ -9,6 +9,7 @@ const ForgotPassword = () => {
     const [submitted, setSubmitted] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [resetLink, setResetLink] = useState('');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -16,7 +17,10 @@ const ForgotPassword = () => {
         setLoading(true);
 
         try {
-            await api.post('/api/auth/forgot-password', { email: email.trim() });
+            const { data } = await api.post('/api/auth/forgot-password', { email: email.trim() });
+            if (data?.resetLink) {
+                setResetLink(data.resetLink);
+            }
             setSubmitted(true);
         } catch (err) {
             console.error('Forgot password error:', err);
@@ -111,6 +115,19 @@ const ForgotPassword = () => {
                     <p className="text-[11px] text-muted mb-4">
                         Please check your inbox (and spam folder) and click the link to reset your password. The link is valid for 30 minutes.
                     </p>
+                    {resetLink && (
+                        <div className="mb-4 p-3 bg-primary/10 border border-primary/25 rounded-xl text-left animate-fade-in">
+                            <p className="text-[11px] font-semibold text-primary mb-1.5">
+                                Direct Recovery Link:
+                            </p>
+                            <a
+                                href={resetLink}
+                                className="block text-center py-2 px-3 bg-primary hover:bg-primary-hover text-white text-xs font-semibold rounded-lg shadow-warm transition-all"
+                            >
+                                Reset My Password Now
+                            </a>
+                        </div>
+                    )}
                     <div className="space-y-2">
                         <button
                             onClick={() => setSubmitted(false)}
